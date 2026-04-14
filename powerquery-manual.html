@@ -1,0 +1,1652 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Power Query マニュアル</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            background: 'var(--background)',
+            foreground: 'var(--foreground)',
+            card: 'var(--card)',
+            'card-foreground': 'var(--card-foreground)',
+            border: 'var(--border)',
+            input: 'var(--input)',
+            primary: 'var(--primary)',
+            'primary-foreground': 'var(--primary-foreground)',
+            muted: 'var(--muted)',
+            'muted-foreground': 'var(--muted-foreground)',
+          },
+        },
+      },
+    }
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <style>
+    :root {
+      --background: #ffffff;
+      --foreground: #0a0a0a;
+      --card: #ffffff;
+      --card-foreground: #0a0a0a;
+      --border: #e5e5e5;
+      --input: #e5e5e5;
+      --primary: #171717;
+      --primary-foreground: #fafafa;
+      --muted: #f5f5f5;
+      --muted-foreground: #737373;
+      --radius: 0.625rem;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; border-color: var(--border); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', 'Yu Gothic', sans-serif;
+      background-color: var(--background);
+      color: var(--foreground);
+      -webkit-font-smoothing: antialiased;
+    }
+    .scroll-area { overflow-y: auto; scrollbar-width: thin; scrollbar-color: #d4d4d4 transparent; }
+    .scroll-area::-webkit-scrollbar { width: 6px; }
+    .scroll-area::-webkit-scrollbar-track { background: transparent; }
+    .scroll-area::-webkit-scrollbar-thumb { background-color: #d4d4d4; border-radius: 3px; }
+    .accordion-content { overflow: hidden; transition: max-height 0.2s ease-out, opacity 0.2s ease-out; max-height: 0; opacity: 0; }
+    .accordion-content.open { max-height: 2000px; opacity: 1; }
+    .accordion-trigger svg.chevron { transition: transform 0.2s ease; }
+    .accordion-trigger.open svg.chevron { transform: rotate(180deg); }
+    .card { background-color: var(--card); border: 1px solid var(--border); border-radius: var(--radius); }
+    .input { width: 100%; padding: 0.5rem 0.75rem 0.5rem 2.5rem; border: 1px solid var(--border); border-radius: calc(var(--radius) - 2px); background-color: var(--background); color: var(--foreground); font-size: 0.875rem; outline: none; transition: border-color 0.15s; }
+    .input:focus { border-color: #a3a3a3; box-shadow: 0 0 0 2px rgba(163,163,163,0.3); }
+    .input::placeholder { color: var(--muted-foreground); }
+    .term-btn { background: none; border: none; cursor: pointer; font-size: 0.875rem; text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; text-decoration-color: var(--muted-foreground); color: var(--muted-foreground); transition: color 0.15s, text-decoration-color 0.15s; padding: 0; line-height: 1.5; }
+    .term-btn:hover { color: var(--foreground); text-decoration-color: var(--foreground); }
+    .term-btn.active { font-weight: 600; color: var(--foreground); text-decoration-color: var(--foreground); }
+    .accordion-trigger { width: 100%; background: none; border: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 0.5rem; color: var(--foreground); font-size: 0.875rem; transition: background-color 0.1s; border-radius: calc(var(--radius) - 4px); }
+    .accordion-trigger:hover { background-color: var(--muted); }
+    .breadcrumb-btn { background: none; border: none; cursor: pointer; color: var(--muted-foreground); font-size: 0.875rem; padding: 0; transition: color 0.15s; }
+    .breadcrumb-btn:hover { color: var(--foreground); text-decoration: underline; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+    ::-webkit-scrollbar { height: 4px; width: 4px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .tab-label { font-size: 12px; overflow: hidden; text-overflow: ellipsis; min-width: 0; transition: all 0.2s; }
+    @container tabs (max-width: 600px) { .tab-label { display: none; } }
+    .tabs-container { container-type: inline-size; container-name: tabs; }
+    @media (max-width: 640px) {
+      aside { position: relative !important; width: 100% !important; height: auto !important; border-right: none !important; border-bottom: 1px solid var(--border); }
+      main { margin-left: 0 !important; }
+    }
+  </style>
+</head>
+<body class="min-h-screen" style="background-color: var(--background);">
+
+  <!-- 固定サイドバー -->
+  <aside style="position:fixed;left:0;top:0;height:100vh;width:320px;border-right:1px solid var(--border);background-color:var(--card);display:flex;flex-direction:column;z-index:10;">
+    <div style="padding:1rem;border-bottom:1px solid var(--border);">
+      <h1 style="font-size:1.125rem;font-weight:700;display:flex;align-items:center;gap:0.5rem;color:var(--foreground);">
+        🔍 用語検索
+      </h1>
+    </div>
+    <div style="padding:1rem;">
+      <div style="position:relative;">
+        <svg style="position:absolute;left:0.75rem;top:50%;transform:translateY(-50%);color:var(--muted-foreground);" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input id="searchInput" class="input" type="text" placeholder="検索..." />
+      </div>
+    </div>
+    <div style="padding:0 1rem 0.75rem;border-bottom:1px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:0.25rem;font-size:0.875rem;color:var(--muted-foreground);">
+        <button class="breadcrumb-btn" onclick="clearSelection()">検索</button>
+        <span id="breadcrumbArrow" style="display:none;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+        </span>
+        <span id="breadcrumbTerm" style="color:var(--foreground);"></span>
+      </div>
+    </div>
+    <div class="scroll-area" style="flex:1;padding:0.5rem;">
+      <div>
+        <button class="accordion-trigger open" id="termsToggle" onclick="toggleAccordion('termsContent', this)">
+          <div style="display:flex;align-items:center;gap:0.5rem;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--muted-foreground);">
+              <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+            </svg>
+            <span style="font-weight:500;">用語一覧</span>
+          </div>
+          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m6 9 6 6 6-6"/>
+          </svg>
+        </button>
+        <div class="accordion-content open" id="termsContent">
+          <div id="termsList" style="display:flex;flex-wrap:wrap;gap:0.5rem 0.75rem;padding:0 0.5rem 0.5rem;"></div>
+        </div>
+      </div>
+      <div id="meaningSection" style="display:none;margin-top:0.25rem;">
+        <button class="accordion-trigger open" id="meaningToggle" onclick="toggleAccordion('meaningContent', this)">
+          <div style="display:flex;align-items:center;gap:0.5rem;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--muted-foreground);">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+            </svg>
+            <span style="font-weight:500;">意味</span>
+          </div>
+          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m6 9 6 6 6-6"/>
+          </svg>
+        </button>
+        <div class="accordion-content open" id="meaningContent">
+          <div style="padding:0 0.5rem 0.5rem;">
+            <div class="card" style="padding:1rem;box-shadow:0 1px 3px rgba(0,0,0,0.07);">
+              <h3 id="meaningTitle" style="font-size:1rem;font-weight:600;margin-bottom:0.75rem;color:var(--foreground);"></h3>
+              <div style="display:flex;flex-direction:column;gap:0.75rem;font-size:0.875rem;">
+                <div>
+                  <div style="display:flex;align-items:center;gap:0.25rem;color:#2563eb;font-weight:500;margin-bottom:0.25rem;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                    意味
+                  </div>
+                  <p id="meaningText" style="color:var(--muted-foreground);padding-left:1rem;"></p>
+                </div>
+                <div>
+                  <div style="display:flex;align-items:center;gap:0.25rem;color:#2563eb;font-weight:500;margin-bottom:0.25rem;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                    画面位置
+                  </div>
+                  <p id="meaningLocation" style="color:var(--muted-foreground);padding-left:1rem;"></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- メインコンテンツ -->
+  <main style="margin-left:320px;min-height:100vh;padding:2rem;">
+    <div id="root"></div>
+  </main>
+
+  <script>
+    const terms = [
+      { id:1,  name:"ホームタブ",          meaning:"Power Queryエディターの基本操作が集まったタブ。クエリの読み込み・結合・行列の操作を行う。",                          location:"Power Queryエディター ▶ 上部タブ ホーム",             category:"tab" },
+      { id:2,  name:"変換タブ",            meaning:"データの型変更・値の置換・列の分割など既存列を加工する操作が集まったタブ。",                                        location:"Power Queryエディター ▶ 上部タブ 変換",              category:"tab" },
+      { id:3,  name:"列の追加タブ",        meaning:"カスタム列・条件列・インデックス列など新しい列を作成する操作が集まったタブ。",                                       location:"Power Queryエディター ▶ 上部タブ 列の追加",          category:"tab" },
+      { id:4,  name:"表示タブ",            meaning:"数式バー・クエリ設定・列の品質表示など画面の表示設定を変更するタブ。",                                             location:"Power Queryエディター ▶ 上部タブ 表示",              category:"tab" },
+      { id:5,  name:"カスタム列",          meaning:"M言語の数式を使って自由に新しい列を作成する機能。{1..[デザイン数]}のようなリスト生成も可能。",                      location:"列の追加タブ ▶ カスタム列",                          category:"feature" },
+      { id:6,  name:"条件列",              meaning:"IF条件で値を分岐させて新しい列を作成する機能。関数を使わずGUI操作のみで設定できる。",                              location:"列の追加タブ ▶ 条件列",                              category:"feature" },
+      { id:7,  name:"値の置換",            meaning:"列内の特定の値を別の値に一括置換する機能。削除は空白に置換することで実現する。",                                    location:"変換タブ ▶ 値の置換",                               category:"feature" },
+      { id:8,  name:"クエリの結合（マージ）", meaning:"共通のキー列を使って2つのテーブルを横方向に結合する機能。VLOOKUPの強化版。",                                 location:"ホームタブ ▶ クエリの結合（マージ）",                 category:"feature" },
+      { id:9,  name:"クエリの追加",        meaning:"同じ列構造を持つ複数のテーブルを縦方向に結合する機能。月別ファイルの統合などに使う。",                              location:"ホームタブ ▶ クエリの追加",                          category:"feature" },
+      { id:10, name:"閉じて読み込む",      meaning:"Power Queryでの変換処理をExcelシートに反映させて終了するボタン。",                                                  location:"ホームタブ ▶ 閉じて読み込む",                        category:"action" },
+      { id:11, name:"適用したステップ",    meaning:"クエリに加えた処理の履歴一覧。右側パネルに表示され、各ステップを削除・編集できる。",                                location:"Power Queryエディター ▶ 右側パネル",                  category:"basic" },
+      { id:12, name:"グループ化",          meaning:"指定した列を基準にデータを集計（合計・平均・件数など）する機能。",                                                    location:"ホームタブ ▶ グループ化",                            category:"feature" },
+      { id:13, name:"列のピボット",        meaning:"行データを列に変換する機能。縦型データを横型（クロス集計）形式に変換する。",                                         location:"変換タブ ▶ 列のピボット",                            category:"feature" },
+      { id:14, name:"列のピボット解除",    meaning:"横型データを縦型に変換する機能。クロス集計表を分析しやすい縦型形式に戻す。",                                         location:"変換タブ ▶ 列のピボット解除",                        category:"feature" },
+      { id:15, name:"インデックス列",      meaning:"連番（1,2,3…）を自動付与する機能。行の識別子や明細IDの作成に使う。",                                                location:"列の追加タブ ▶ インデックス列",                       category:"feature" },
+      { id:16, name:"データ型",            meaning:"列の値の種類（整数・小数・テキスト・日付など）を指定する設定。型が違うと計算や並び替えが崩れる。",                    location:"変換タブ ▶ データ型 / 列ヘッダー左のアイコン",        category:"basic" },
+      { id:17, name:"フィルター",          meaning:"条件に一致する行だけを表示・除外する機能。列ヘッダーの▼ボタンから操作する。",                                        location:"各列ヘッダー ▶ ▼ボタン",                             category:"action" },
+      { id:18, name:"null",                meaning:"値が存在しない（空白）状態を示す。{1..[列名]}などの処理でnullがあるとエラーになる。事前に置換が必要。",             location:"データ内 / 値の置換で対処",                           category:"basic" },
+      { id:19, name:"List（リスト）",      meaning:"{1,2,3}のような複数値をひとつのセルに持つデータ型。↕展開ボタンで行に展開できる。",                                  location:"カスタム列で{1..[列名]}を使ったときに表示",           category:"basic" },
+      { id:20, name:"展開ボタン（↕）",    meaning:"Listやテーブル型の列を行や列に展開するボタン。列ヘッダー右端に表示される。",                                         location:"対象列のヘッダー右端",                               category:"action" },
+      { id:21, name:"左外部結合",          meaning:"マージ時の結合方法。左テーブルの全行を保持しつつ、右テーブルから一致する値を取得する。",                              location:"クエリの結合 ▶ 結合の種類",                           category:"basic" },
+      { id:22, name:"複製",                meaning:"既存クエリの処理ステップをそのまままコピーした新しいクエリを作る機能。別データへの流用に使う。",                      location:"左クエリ一覧 ▶ 右クリック ▶ 複製",                   category:"action" },
+      { id:23, name:"Text.Select",         meaning:"指定した文字種のみを抽出するM関数。例：Text.Select([列名], {\"ぁ\"..\"ん\"})でひらがなのみ抽出。",                location:"カスタム列 ▶ 数式欄",                                category:"function" },
+      { id:24, name:"並べ替え",            meaning:"列ヘッダーをクリックして昇順・降順に並べ替える機能。複数列で連続して適用すると複合ソートになる。",                   location:"列ヘッダー ▶ クリック / 変換タブ ▶ 並べ替え",        category:"action" },
+      { id:25, name:"..（範囲演算子）",    meaning:"{1..5}のように「開始値から終了値までの連続したリスト」を生成するM言語の記号。行複製処理のコアとなる。",             location:"カスタム列の数式欄（M言語）",                        category:"function" },
+      { id:26, name:"ソース（適用ステップ）", meaning:"クエリの一番上のステップ。データの取得元（テーブルやファイル）を指定している。⚙で変更可能。",                  location:"適用したステップ ▶ 一番上のステップ ▶ ⚙",           category:"basic" },
+      { id:27, name:"テーブルまたは範囲から", meaning:"Excelのテーブルや選択範囲をPower Queryに読み込む入口。",                                                         location:"データタブ ▶ テーブルまたは範囲から",                 category:"action" },
+      { id:28, name:'#"列名"（エスケープ）', meaning:'【】№などの記号・特殊文字・スペースを含む列名は [列名] ではなく [#"列名"] と書かないとエラーになる。ジェネレーターは自動で判定して出力する。', location:"カスタム列の数式欄 / M言語全般", category:"basic" },
+    ];
+
+    const categories = {
+      tab:"タブ", feature:"機能", action:"操作", basic:"基本用語", function:"関数・記号"
+    };
+
+    let selectedTerm = null;
+    let searchQuery = "";
+
+    function renderTerms() {
+      const list = document.getElementById("termsList");
+      const filtered = searchQuery
+        ? terms.filter(t =>
+            t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            t.meaning.toLowerCase().includes(searchQuery.toLowerCase())
+          )
+        : terms;
+      list.innerHTML = filtered.map(term => `
+        <button class="term-btn ${selectedTerm && selectedTerm.id === term.id ? 'active' : ''}" onclick="selectTerm(${term.id})">${escapeHtml(term.name)}</button>
+      `).join("");
+    }
+
+    function selectTerm(id) {
+      selectedTerm = terms.find(t => t.id === id);
+      if (!selectedTerm) return;
+      document.getElementById("breadcrumbArrow").style.display = "inline-flex";
+      document.getElementById("breadcrumbTerm").textContent = categories[selectedTerm.category] + "：" + selectedTerm.name;
+      document.getElementById("meaningTitle").textContent = selectedTerm.name;
+      document.getElementById("meaningText").textContent = selectedTerm.meaning;
+      document.getElementById("meaningLocation").textContent = selectedTerm.location;
+      const section = document.getElementById("meaningSection");
+      section.style.display = "block";
+      const content = document.getElementById("meaningContent");
+      const toggle = document.getElementById("meaningToggle");
+      content.classList.add("open");
+      toggle.classList.add("open");
+      renderTerms();
+    }
+
+    function clearSelection() {
+      selectedTerm = null;
+      document.getElementById("breadcrumbArrow").style.display = "none";
+      document.getElementById("breadcrumbTerm").textContent = "";
+      document.getElementById("meaningSection").style.display = "none";
+      renderTerms();
+    }
+
+    function toggleAccordion(contentId, triggerEl) {
+      const content = document.getElementById(contentId);
+      content.classList.toggle("open");
+      triggerEl.classList.toggle("open");
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    }
+
+    document.getElementById("searchInput").addEventListener("input", function() {
+      searchQuery = this.value;
+      renderTerms();
+    });
+
+    renderTerms();
+  </script>
+
+  <script type="text/babel">
+const { useState } = React;
+
+// ==============================
+// ホームタブ操作ステップ
+// ==============================
+const homeSteps = [
+  {
+    id:1, phase:"データ取込", phaseColor:"#0ea5e9", phaseBg:"#f0f9ff",
+    title:"Power Queryを開く", icon:"📂",
+    desc:"Excelからデータを読み込んでエディターを起動する",
+    details:[
+      "【データタブ】Excelの上部タブ「データ」をクリック",
+      "【テーブルまたは範囲から】対象のセルを選択した状態で「テーブルまたは範囲から」をクリック",
+      "Power Queryエディターが起動する",
+    ],
+    warns:[], qa:[],
+  },
+  {
+    id:2, phase:"行の操作", phaseColor:"#10b981", phaseBg:"#f0fdf4",
+    title:"不要な行を削除する", icon:"🗑️",
+    desc:"上位の行・空白行・エラー行などを削除する",
+    details:[
+      "【ホームタブ】上部「ホーム」タブをクリック",
+      "【行の削除▼】「行の削除」の▼をクリックしてメニューを開く",
+      "「上位の行の削除」「空白行の削除」「エラーの削除」から目的に合うものを選ぶ",
+      "削除したい件数を入力してOK",
+    ],
+    warns:["ステップは積み重なるので、順番を間違えると意図しない行が消える場合がある"],
+    qa:[
+      { q:"特定の値がある行だけ消したい", a:"列ヘッダーの▼フィルターで対象の値のチェックを外すと、その行を除外できます。ただしPower Queryでは「条件で除外する」設計が基本なので、フィルターで対象を外す方法が再現性も高くおすすめです。" },
+    ],
+  },
+  {
+    id:3, phase:"テーブル結合", phaseColor:"#8b5cf6", phaseBg:"#f5f3ff",
+    title:"クエリをマージ（結合）する", icon:"🔗",
+    desc:"共通のキー列で2つのテーブルを横方向に結合する（VLOOKUP的な処理）",
+    details:[
+      "【ホームタブ】「クエリの結合（マージ）」をクリック",
+      "上段に元データ、下段に参照テーブルを選択",
+      "両テーブルの共通列（例：タイトル名）をそれぞれクリックしてキーとして指定",
+      "結合の種類：「左外部結合」を選択（元データの行を全て保持する）",
+      "OKをクリック → 新しい列（テーブル型）が追加される",
+      "追加された列の右端「↕展開ボタン」をクリック → 取得したい列を選んで展開",
+    ],
+    warns:["キー列の値が完全一致していないとnullになる（表記ゆれに注意）"],
+    qa:[
+      { q:"展開したら列がたくさん増えてしまった", a:"展開ボタン（↕）クリック後のダイアログで、必要な列だけチェックを残して他を外すと絞り込めます。「元の列名をプレフィックスとして使用する」のチェックも外すとスッキリします。" },
+      { q:"VLOOKUPと何が違うの？", a:"Excelの計算式と違い、Power Queryのマージはデータを「処理として定義する」ため、ソースデータを更新してクエリを更新すれば自動で再実行されます。数式エラーも起きません。" },
+    ],
+  },
+  {
+    id:4, phase:"テーブル結合", phaseColor:"#8b5cf6", phaseBg:"#f5f3ff",
+    title:"クエリを追加（縦結合）する", icon:"⬇️",
+    desc:"同じ列構造の複数テーブルを縦方向に連結する",
+    details:[
+      "【ホームタブ】「クエリの追加」▼をクリック",
+      "「2つのテーブル」または「3つ以上のテーブル」を選択",
+      "結合したいクエリを選んでOK",
+      "行が下に連結される",
+    ],
+    warns:["列名が一致していないと新しい列として追加されてしまう（列名を統一すること）"],
+    qa:[],
+  },
+  {
+    id:5, phase:"グループ集計", phaseColor:"#f59e0b", phaseBg:"#fffbeb",
+    title:"グループ化して集計する", icon:"📊",
+    desc:"指定した列でグループ化し、合計・件数・平均などを算出する",
+    details:[
+      "【ホームタブ】「グループ化」をクリック",
+      "グループの基準にする列を選択（例：カテゴリ）",
+      "「新しい列名」に集計列の名前を入力（例：件数）",
+      "操作（合計・平均・最小・最大・行数など）を選択",
+      "集計対象の列を選択してOK",
+    ],
+    warns:["グループ化後はグループ外の列が消えることに注意。必要な列は先に確認する"],
+    qa:[
+      { q:"複数列でグループ化したい", a:"グループ化ダイアログ内の「グループ化の追加」ボタンで条件を追加できます。例：カテゴリ＋種類でグループ化。" },
+    ],
+  },
+  {
+    id:6, phase:"書き出し", phaseColor:"#ec4899", phaseBg:"#fdf2f8",
+    title:"閉じてExcelに読み込む", icon:"✅",
+    desc:"変換した結果をExcelシートに反映させる",
+    details:[
+      "【ホームタブ】左端「閉じて読み込む」▼をクリック",
+      "「閉じて読み込む」→ 現在の設定でシートに出力",
+      "「閉じて次に読み込む」→ 出力先（テーブル・ピボット・接続のみなど）を選べる",
+    ],
+    warns:["「接続の作成のみ」にするとシートに出力されないので注意"],
+    qa:[],
+  },
+];
+
+// ==============================
+// 行を増やす処理ステップ
+// ==============================
+const rowExpandSteps = [
+  {
+    id:1, phase:"前準備", phaseColor:"#6366f1", phaseBg:"#eef2ff",
+    title:"null・0を補正する", icon:"🔧",
+    desc:"デザイン数列にnullや0がある場合は先に補正する（ないと展開できない）",
+    details:[
+      "【列の追加タブ】「条件列」をクリック",
+      "「新しい列名」に「展開数」と入力",
+      "条件1：デザイン数 ＝ null → 出力 1",
+      "「句の追加」をクリック",
+      "条件2：デザイン数 ＝ 0 → 出力 1",
+      "「それ以外」の出力で「列」を選択 →「デザイン数」を選ぶ（ここが重要！）",
+      "OKをクリック → 「展開数」列ができる",
+    ],
+    warns:["「それ以外」に直接数値を入力するとすべての行が上書きされるため、必ず「列」を選択して元の列を指定する"],
+    qa:[
+      { q:"条件列ダイアログの「それ以外」で列を選択するには？", a:"「それ以外」欄の左側にある種別ドロップダウンが「値」になっている場合は「列」に切り替えてから、右側のドロップダウンで「デザイン数」を選択します。" },
+    ],
+  },
+  {
+    id:2, phase:"リスト生成", phaseColor:"#0ea5e9", phaseBg:"#f0f9ff",
+    title:"展開用のリスト列を作る", icon:"📋",
+    desc:"{1..n}の形式で「行を増やす回数分のリスト」を生成する",
+    details:[
+      "【列の追加タブ】「カスタム列」をクリック",
+      "「新しい列名」に「展開用」と入力",
+      "「カスタム列の数式」に次の式を入力：{1..[展開数]}",
+      "OKをクリック → セルに「List」と緑のアイコンが表示される（正常）",
+    ],
+    warns:["「List」の緑アイコンが表示されれば成功。エラーが出る場合はnull・0の補正が漏れている可能性がある"],
+    qa:[
+      { q:"{1..[デザイン数]}と{1..[展開数]}の違いは？", a:"基本的に同じ処理ですが、補正列（展開数）を経由することでnull・0による展開失敗を防げます。直接[デザイン数]を使うのはデータが綺麗な場合のみ推奨です。" },
+      { q:"..（2つのドット）の意味は？", a:"M言語の範囲演算子で「○から○まで」という意味です。{1..3}は{1,2,3}を生成します。{1..[展開数]}は「1から展開数の値まで」の連番リストを作ります。" },
+    ],
+  },
+  {
+    id:3, phase:"行展開", phaseColor:"#10b981", phaseBg:"#f0fdf4",
+    title:"リストを行に展開する", icon:"↕️",
+    desc:"Listが入った列を「1セル1行」に展開して行を複製する",
+    details:[
+      "「展開用」列のヘッダー右端にある「↕展開ボタン」をクリック",
+      "メニューから「新しい行に展開」を選ぶ（「列に展開」ではない）",
+      "OKをクリック → デザイン数の値だけ行が増える",
+    ],
+    warns:["「列に展開」を選ぶと行ではなく列が増えてしまう。必ず「新しい行に展開」を選ぶこと","行が減る場合はグループ化ステップが混入している可能性がある。右側「適用したステップ」を確認する"],
+    qa:[
+      { q:"展開したら行数が減った", a:"「集約」（グループ化的な処理）が選ばれた可能性があります。適用したステップを確認し、意図しないステップがあれば×で削除してください。また「列に展開」ではなく「新しい行に展開」を選んでいるか再確認してください。" },
+    ],
+  },
+  {
+    id:4, phase:"整理", phaseColor:"#f59e0b", phaseBg:"#fffbeb",
+    title:"不要な補助列を削除する", icon:"🗑️",
+    desc:"展開用・展開数など作業用の列を削除して見た目を整える",
+    details:[
+      "「展開用」列のヘッダーを右クリック →「削除」",
+      "「展開数」列のヘッダーを右クリック →「削除」",
+      "【ホームタブ】「閉じて読み込む」でExcelに反映",
+    ],
+    warns:[],
+    qa:[
+      { q:"展開用列に連番（1・2・3）を残しておきたい", a:"削除せずにそのまま残しておけば「デザインNo」として使えます。列名を変更したい場合はヘッダーをダブルクリックして名前を変更します。" },
+    ],
+  },
+];
+
+// ==============================
+// 並び替え・フィルターステップ
+// ==============================
+const sortFilterSteps = [
+  {
+    id:1, phase:"基本操作", phaseColor:"#0ea5e9", phaseBg:"#f0f9ff",
+    title:"列で並べ替える", icon:"↕️",
+    desc:"列ヘッダーをクリックして昇順・降順に並べる",
+    details:[
+      "並べ替えたい列のヘッダーをクリック",
+      "上部「ホームタブ」または「変換タブ」の「昇順」「降順」ボタンをクリック",
+      "複数列で並べたい場合は「カテゴリ列」を先に並べてから「種類列」を続けて並べる（順番が重要）",
+    ],
+    warns:["フィルター後に並べ替えると元の全件表示に戻れなくなる。並べ替えはフィルター前に行う"],
+    qa:[
+      { q:"複数列の並べ替えが思い通りにならない", a:"Power Queryの並べ替えは「最後に並べた列が優先」ではなく「適用したステップ」の順で処理されます。意図した順番になるよう、メイン列→サブ列の順にクリックしてください。" },
+    ],
+  },
+  {
+    id:2, phase:"絞り込み", phaseColor:"#10b981", phaseBg:"#f0fdf4",
+    title:"フィルターで絞り込む", icon:"🔽",
+    desc:"特定のカテゴリ・値だけを表示する",
+    details:[
+      "絞り込みたい列ヘッダー右の「▼」をクリック",
+      "フィルターメニューで残したい値だけにチェックを入れる",
+      "OKをクリック → 対象の行だけ残る",
+      "複数列にフィルターを重ねることで AND 条件を実現できる",
+    ],
+    warns:["フィルターはPower Queryの処理として記録される。解除すると全件に戻る"],
+    qa:[],
+  },
+  {
+    id:3, phase:"カテゴリ内整列", phaseColor:"#8b5cf6", phaseBg:"#f5f3ff",
+    title:"カテゴリ内の種類を順番に揃える", icon:"🗂️",
+    desc:"「アニメ内では新規→既存の順」など、カテゴリ内の並び順を制御する",
+    details:[
+      "【列の追加タブ】「条件列」をクリック",
+      "新しい列名に「並び順」と入力",
+      "条件1：種類 ＝ 新規 → 出力 1",
+      "「句の追加」→ 条件2：種類 ＝ 既存 → 出力 2（以降必要なだけ追加）",
+      "「それ以外」→ 出力 9（その他）",
+      "OKをクリック",
+      "「カテゴリ」列を昇順で並べ替え",
+      "続けて「並び順」列を昇順で並べ替え",
+      "不要なら「並び順」列を右クリック → 削除",
+    ],
+    warns:["テキストのまま並べると意図した順にならない。必ず数値に変換して制御する","並べ替えはカテゴリ→並び順の順で適用すること"],
+    qa:[
+      { q:"3段階以上（新規・進行中・既存）も同じ方法でできる？", a:"できます。条件列で 新規→1、進行中→2、既存→3 のように数値を割り当てれば何段階でも対応できます。" },
+    ],
+  },
+];
+
+// ==============================
+// テキスト加工ステップ
+// ==============================
+const textSteps = [
+  {
+    id:1, phase:"削除・置換", phaseColor:"#0ea5e9", phaseBg:"#f0f9ff",
+    title:"特定の文字列を削除する", icon:"✂️",
+    desc:"「削除＝空白への置換」で処理する",
+    details:[
+      "対象列を選択（クリック）",
+      "【変換タブ】「値の置換」をクリック",
+      "「検索する値」に削除したい文字列を入力（例：株式会社）",
+      "「置換後の値」は空白のまま（何も入力しない）",
+      "OKをクリック → 該当文字列が削除される",
+    ],
+    warns:[],
+    qa:[
+      { q:"前後の空白だけ消したい", a:"変換タブ → 書式 → トリミング を使うと前後の空白を一括削除できます。" },
+    ],
+  },
+  {
+    id:2, phase:"抽出", phaseColor:"#10b981", phaseBg:"#f0fdf4",
+    title:"テキストから文字だけ抽出する", icon:"📝",
+    desc:"数字・記号を除いて日本語・英字のみ取り出す（関数1か所のみ入力）",
+    details:[
+      "【列の追加タブ】「カスタム列」をクリック",
+      "新しい列名に「文字抽出」など入力",
+      "数式欄に次の式を入力：",
+      'Text.Trim(Text.Select(Text.From([対象列名]), {"ぁ".."ん","ァ".."ン","一".."龯","A".."Z","a".."z","ー"}))',
+      "OKをクリック → 文字のみの列ができる",
+      "元の列が不要なら削除し、新列名を元の列名に変更",
+    ],
+    warns:["対象列名は実際の列名に書き換えること","漢字の範囲{\"一\"..\"龯\"}はすべての常用漢字をカバーしている"],
+    qa:[
+      { q:"数字だけ抽出したい", a:'Text.Select([列名], {"0".."9"}) を使います。数値として使いたい場合はさらにデータ型を「整数」に変換します。' },
+    ],
+  },
+  {
+    id:3, phase:"抽出", phaseColor:"#8b5cf6", phaseBg:"#f5f3ff",
+    title:"データ型を変換する", icon:"🔄",
+    desc:"列の値を数値・テキスト・日付などの型に変換する",
+    details:[
+      "変換したい列を選択",
+      "【変換タブ】「データ型」▼をクリック",
+      "「整数」「テキスト」「日付」など目的の型を選ぶ",
+      "変換できない値はエラーになる",
+      "エラーが出た場合：【ホームタブ】「行の削除」▶「エラーの削除」またはエラーを別の値に置換する",
+    ],
+    warns:["数値列に文字が混入していると型変換でエラーになる。事前にデータを確認する"],
+    qa:[],
+  },
+];
+
+// ==============================
+// マスタ管理ステップ
+// ==============================
+const masterSteps = [
+  {
+    id:1, phase:"設計", phaseColor:"#6366f1", phaseBg:"#eef2ff",
+    title:"マスタテーブルを作成する", icon:"📋",
+    desc:"属性情報（カテゴリなど）を管理する対応表をExcel上に作る",
+    details:[
+      "Excelの空きシートまたは同じシートの空きスペースにマスタ表を作成",
+      "列構成の例：タイトル名 ／ カテゴリ ／ 属性",
+      "データを入力（例：ごちうさ → アニメ → アニメーション）",
+      "マスタ範囲を選択してCtrl+Tでテーブル化し、テーブル名を設定（例：属性マスタ）",
+    ],
+    warns:["タイトル名は元データの表記と完全一致させること（表記ゆれがある場合は正規化マスタを別途作成）"],
+    qa:[
+      { q:"表記ゆれが多い場合はどうする？", a:"「正規化マスタ」として「表記ゆれ → 正式名称」の対応表を別に作り、元データとマージして名寄せしてから属性マスタとマージします。修正はマスタだけで済むので管理が楽になります。" },
+    ],
+  },
+  {
+    id:2, phase:"読込", phaseColor:"#0ea5e9", phaseBg:"#f0f9ff",
+    title:"マスタをPower Queryに読み込む", icon:"📂",
+    desc:"元データとマスタをそれぞれ別のクエリとして読み込む",
+    details:[
+      "元データのテーブル内を選択 →「データタブ」→「テーブルまたは範囲から」",
+      "マスタテーブル内を選択 →「データタブ」→「テーブルまたは範囲から」",
+      "Power Queryエディターの左側に2つのクエリが並ぶ",
+    ],
+    warns:[],
+    qa:[],
+  },
+  {
+    id:3, phase:"結合", phaseColor:"#10b981", phaseBg:"#f0fdf4",
+    title:"元データとマスタをマージする", icon:"🔗",
+    desc:"タイトル名をキーに、マスタからカテゴリ等を取得する",
+    details:[
+      "左側クエリ一覧で「元データ」クエリを選択して開く",
+      "【ホームタブ】「クエリの結合（マージ）」をクリック",
+      "上段：元データ ／ 下段：属性マスタ を選択",
+      "両方の「タイトル名列」をクリックしてキーに指定",
+      "結合の種類：「左外部結合」を選択",
+      "OKをクリック → 右端に属性マスタ列（テーブル型）が追加",
+      "追加列の↕展開ボタン → 取得したい列（カテゴリ・属性）を選択して展開",
+    ],
+    warns:["タイトル名が完全一致していないとnullになる。表記ゆれは事前に正規化しておく"],
+    qa:[
+      { q:"カテゴリがnullになってしまう", a:"タイトル名の表記が元データとマスタで一致していない可能性があります。スペースの有無・全角半角・改行文字の混入などを確認してください。" },
+    ],
+  },
+];
+
+const phaseColors = {
+  "データ取込":"#0ea5e9","行の操作":"#10b981","テーブル結合":"#8b5cf6",
+  "グループ集計":"#f59e0b","書き出し":"#ec4899","前準備":"#6366f1",
+  "リスト生成":"#0ea5e9","行展開":"#10b981","整理":"#f59e0b",
+  "基本操作":"#0ea5e9","絞り込み":"#10b981","カテゴリ内整列":"#8b5cf6",
+  "削除・置換":"#0ea5e9","抽出":"#10b981","設計":"#6366f1",
+  "読込":"#0ea5e9","結合":"#10b981",
+};
+
+function StepList({ steps }) {
+  const [activeStep, setActiveStep] = useState(null);
+  const [filter, setFilter] = useState("すべて");
+  const [openQA, setOpenQA] = useState({});
+
+  const phaseList = [...new Set(steps.map(s => s.phase))];
+  const filtered = filter === "すべて" ? steps : steps.filter(s => s.phase === filter);
+  const toggleQA = (key) => setOpenQA(prev => ({ ...prev, [key]: !prev[key] }));
+
+  return (
+    <div>
+      <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:14 }}>
+        {["すべて", ...phaseList].map(p => (
+          <button key={p} onClick={() => { setFilter(p); setActiveStep(null); }} style={{
+            padding:"6px 14px", borderRadius:20, border:"2px solid",
+            borderColor: filter===p ? (phaseColors[p]||"#1e293b") : "#e2e8f0",
+            background: filter===p ? (phaseColors[p]||"#1e293b") : "#fff",
+            color: filter===p ? "#fff" : "#64748b",
+            fontSize:12, cursor:"pointer", fontWeight: filter===p ? "bold" : "normal",
+            transition:"all 0.15s", fontFamily:"inherit"
+          }}>{p}</button>
+        ))}
+      </div>
+      <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:16 }}>
+        {filtered.map(step => {
+          const isActive = activeStep === step.id;
+          return (
+            <div key={step.id}>
+              <div onClick={() => setActiveStep(isActive ? null : step.id)} style={{
+                background:"#fff", borderRadius:12,
+                border:"2px solid "+(isActive ? step.phaseColor : "#e2e8f0"),
+                padding:"12px 16px", cursor:"pointer", transition:"all 0.15s",
+                boxShadow: isActive ? "0 0 0 3px "+step.phaseColor+"22" : "none"
+              }}>
+                <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+                  <div style={{
+                    width:36, height:36, borderRadius:"50%", flexShrink:0,
+                    background: isActive ? step.phaseColor : step.phaseBg,
+                    color: isActive ? "#fff" : step.phaseColor,
+                    display:"flex", alignItems:"center", justifyContent:"center",
+                    fontSize:14, fontWeight:"bold"
+                  }}>{step.id}</div>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
+                      <span style={{ fontSize:14, fontWeight:"bold", color:"#1e293b" }}>{step.icon} {step.title}</span>
+                      <span style={{ background:step.phaseBg, color:step.phaseColor, fontSize:10, fontWeight:"bold", padding:"2px 8px", borderRadius:10 }}>{step.phase}</span>
+                      {step.warns.length > 0 && <span style={{ background:"#fef9c3", color:"#854d0e", fontSize:10, padding:"2px 8px", borderRadius:10 }}>⚠️ 注意あり</span>}
+                      {step.qa.length > 0 && <span style={{ background:"#f0fdf4", color:"#166534", fontSize:10, padding:"2px 8px", borderRadius:10 }}>💬 Q&A</span>}
+                    </div>
+                    <div style={{ fontSize:12, color:"#64748b", marginTop:2 }}>{step.desc}</div>
+                  </div>
+                  <div style={{ color:"#94a3b8", fontSize:16, transform: isActive ? "rotate(90deg)" : "rotate(0deg)", transition:"transform 0.2s" }}>▶</div>
+                </div>
+              </div>
+              {isActive && (
+                <div style={{ background:step.phaseBg, border:"2px solid "+step.phaseColor, borderTop:"none", borderRadius:"0 0 12px 12px", padding:16, animation:"fadeIn 0.2s ease" }}>
+                  <div style={{ marginBottom: step.warns.length||step.qa.length ? 14 : 0 }}>
+                    <div style={{ fontSize:11, fontWeight:"bold", color:"#64748b", marginBottom:8 }}>📋 手順</div>
+                    <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                      {step.details.map((d,i) => (
+                        <div key={i} style={{ display:"flex", gap:10, alignItems:"flex-start" }}>
+                          <div style={{ width:22, height:22, borderRadius:"50%", flexShrink:0, background:step.phaseColor, color:"#fff", display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:"bold", marginTop:1 }}>{i+1}</div>
+                          <div style={{ fontSize:13, color:"#374151", lineHeight:1.6, paddingTop:2, fontFamily: d.startsWith("Text.") || d.startsWith("{") ? "monospace" : "inherit" }}>{d}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  {step.warns.length > 0 && (
+                    <div style={{ background:"#fefce8", border:"1px solid #fde047", borderRadius:8, padding:"10px 14px", marginBottom: step.qa.length ? 12 : 0 }}>
+                      <div style={{ fontSize:11, fontWeight:"bold", color:"#854d0e", marginBottom:6 }}>⚠️ つまずきやすいポイント</div>
+                      {step.warns.map((w,i) => (
+                        <div key={i} style={{ fontSize:12, color:"#713f12", marginBottom: i<step.warns.length-1?4:0 }}>• {w}</div>
+                      ))}
+                    </div>
+                  )}
+                  {step.qa.length > 0 && (
+                    <div>
+                      <div style={{ fontSize:11, fontWeight:"bold", color:"#64748b", marginBottom:8 }}>💬 よくある質問</div>
+                      <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                        {step.qa.map((qa,i) => {
+                          const key = step.id+"-"+i;
+                          return (
+                            <div key={i} style={{ background:"#fff", border:"1px solid #e2e8f0", borderRadius:8, overflow:"hidden" }}>
+                              <div onClick={() => toggleQA(key)} style={{ padding:"9px 14px", cursor:"pointer", display:"flex", justifyContent:"space-between", alignItems:"center", gap:8 }}>
+                                <span style={{ fontSize:12, fontWeight:"bold", color:"#374151" }}>Q. {qa.q}</span>
+                                <span style={{ color:"#94a3b8", fontSize:12, display:"inline-block", transform: openQA[key]?"rotate(90deg)":"rotate(0deg)", transition:"transform 0.2s" }}>▶</span>
+                              </div>
+                              {openQA[key] && (
+                                <div style={{ padding:"0 14px 12px", fontSize:12, color:"#475569", lineHeight:1.7, borderTop:"1px solid #f1f5f9" }}>
+                                  <div style={{ paddingTop:10 }}>A. {qa.a}</div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ==============================
+// タブ概要（はじめに）
+// ==============================
+function IntroGuide({ setMainTab }) {
+  const [openItem, setOpenItem] = useState("tablist");
+  const toggle = (key) => setOpenItem(prev => prev===key ? null : key);
+
+  const tabGuide = [
+    { key:"home",       icon:"🏠", label:"ホームタブ操作",         color:"#1e293b", bg:"#f1f5f9",   desc:"データの取り込み・マージ・グループ化・書き出しなど、Power Queryの基本操作を解説。まずはここから。" },
+    { key:"rowexpand",  icon:"📊", label:"行を増やす処理",          color:"#6366f1", bg:"#eef2ff",   desc:"デザイン数などの列の数値をもとに行を複製する処理。null対処→リスト生成→展開の3ステップ。" },
+    { key:"sortfilter", icon:"↕️", label:"並べ替え・フィルター",    color:"#0ea5e9", bg:"#f0f9ff",   desc:"列で並べ替え・絞り込み・カテゴリ内の種類を揃える方法を解説。" },
+    { key:"text",       icon:"📝", label:"テキスト加工",            color:"#10b981", bg:"#f0fdf4",   desc:"文字の削除・抽出・データ型変換など、テキスト列の整形処理を解説。" },
+    { key:"master",     icon:"🔗", label:"マスタ管理・突合",        color:"#8b5cf6", bg:"#f5f3ff",   desc:"属性マスタを作って元データと紐づける方法。表記ゆれ対策の正規化マスタも解説。" },
+    { key:"functions",  icon:"📚", label:"関数リファレンス",         color:"#db2777", bg:"#fdf2f8",   desc:"Microsoft公式ドキュメントに基づくM言語の主要関数一覧。Text・Table・List・Date関数を業務例付きで掲載。" },
+  ];
+
+  const tabOverview = [
+    { tab:"ホームタブ",     icon:"🏠", desc:"データ取り込み・結合・グループ化・書き出しなど基本操作の起点。一番よく使うタブ。" },
+    { tab:"変換タブ",       icon:"🔄", desc:"既存の列を加工する操作。値の置換・データ型変換・文字列抽出など。" },
+    { tab:"列の追加タブ",   icon:"➕", desc:"新しい列を作成する操作。カスタム列・条件列・インデックス列など。" },
+    { tab:"表示タブ",       icon:"👁️", desc:"数式バー・列の品質・クエリ設定などエディターの表示を切り替える。" },
+  ];
+
+  return (
+    <div>
+      <div style={{ background:"#fff", border:"2px solid #e2e8f0", borderRadius:12, padding:20, marginBottom:12 }}>
+        <div style={{ fontSize:13, fontWeight:"bold", color:"#1e293b", marginBottom:12 }}>📌 このマニュアルでできること</div>
+        <div style={{ fontSize:13, color:"#374151", lineHeight:1.8, marginBottom:16 }}>
+          ExcelのPower Queryエディターを使って、<strong>データの整形・結合・行の複製・テキスト加工</strong>をノーコードまたは最小限の式入力で行えるようになります。関数は必要な場合のみ1か所に限定し、できる限りボタン操作で完結させます。
+        </div>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(180px, 1fr))", gap:8 }}>
+          {[
+            { icon:"🖱️", text:"ボタン操作中心" },
+            { icon:"📋", text:"行の複製・増殖" },
+            { icon:"🔗", text:"テーブル突合・マージ" },
+            { icon:"✂️", text:"テキスト整形・抽出" },
+            { icon:"↕️", text:"並べ替え・フィルター" },
+            { icon:"♻️", text:"クエリの使い回し" },
+          ].map(item => (
+            <div key={item.text} style={{ background:"#f8fafc", borderRadius:8, padding:"8px 12px", fontSize:12, color:"#374151", display:"flex", alignItems:"center", gap:8 }}>
+              <span style={{ fontSize:16 }}>{item.icon}</span>{item.text}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* タブ一覧 */}
+      <div style={{ background:"#fff", border:"2px solid #e2e8f0", borderRadius:12, padding:20, marginBottom:12 }}>
+        <button type="button" onClick={() => toggle("tablist")} style={{ width:"100%", background:"none", border:"none", padding:0, margin:0, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom: openItem==="tablist" ? 12 : 4 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+            <span style={{ fontSize:16 }}>🗂️</span>
+            <span style={{ fontSize:13, fontWeight:"bold", color:"#1e293b" }}>このマニュアルのタブ一覧</span>
+          </div>
+          <span style={{ fontSize:14, color:"#94a3b8", transform: openItem==="tablist"?"rotate(90deg)":"rotate(0deg)", transition:"transform 0.2s" }}>▶</span>
+        </button>
+        {openItem==="tablist" && (
+          <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+            {tabGuide.map(t => (
+              <div key={t.key} style={{ background:t.bg, borderRadius:10, border:"2px solid "+t.color+"33", padding:"12px 14px", display:"flex", flexDirection:"column", gap:8 }}>
+                <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+                  <div style={{ width:32, height:32, borderRadius:"50%", background:t.color, color:"#fff", display:"flex", alignItems:"center", justifyContent:"center", fontSize:15, flexShrink:0 }}>{t.icon}</div>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontSize:13, fontWeight:"bold", color:"#1e293b" }}>{t.label}</div>
+                  </div>
+                  <button onClick={() => setMainTab(t.key)} style={{ background:t.color, color:"#fff", border:"none", borderRadius:999, padding:"6px 12px", fontWeight:"bold", cursor:"pointer", fontFamily:"inherit", fontSize:11, whiteSpace:"nowrap" }}>
+                    このタブを開く →
+                  </button>
+                </div>
+                <div style={{ fontSize:12, color:"#374151", lineHeight:1.7 }}>{t.desc}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Power Queryタブ説明 */}
+      <div onClick={() => toggle("tabs")} style={{ background:"#fff", borderRadius:12, border:"2px solid "+(openItem==="tabs"?"#10b981":"#e2e8f0"), padding:"12px 16px", cursor:"pointer", transition:"all 0.15s", marginBottom: openItem==="tabs" ? 0 : 8, boxShadow: openItem==="tabs"?"0 0 0 3px #10b98122":"none" }}>
+        <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+          <div style={{ width:36, height:36, borderRadius:"50%", flexShrink:0, background: openItem==="tabs"?"#10b981":"#f0fdf4", color: openItem==="tabs"?"#fff":"#10b981", display:"flex", alignItems:"center", justifyContent:"center", fontSize:18 }}>🖥️</div>
+          <div style={{ flex:1 }}>
+            <div style={{ fontSize:14, fontWeight:"bold", color:"#1e293b" }}>Power Queryエディターのタブ説明</div>
+            <div style={{ fontSize:12, color:"#64748b", marginTop:2 }}>ホーム・変換・列の追加・表示タブの役割</div>
+          </div>
+          <div style={{ color:"#94a3b8", fontSize:16, transform: openItem==="tabs"?"rotate(90deg)":"rotate(0deg)", transition:"transform 0.2s" }}>▶</div>
+        </div>
+      </div>
+      {openItem==="tabs" && (
+        <div style={{ background:"#f0fdf4", border:"2px solid #10b981", borderTop:"none", borderRadius:"0 0 12px 12px", padding:16, marginBottom:8, animation:"fadeIn 0.2s ease" }}>
+          <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+            {tabOverview.map((t,i) => (
+              <div key={i} style={{ display:"flex", gap:10, alignItems:"flex-start", background:"#fff", borderRadius:8, padding:"10px 12px", border:"1px solid #e2e8f0" }}>
+                <div style={{ width:28, height:28, borderRadius:"50%", flexShrink:0, background:"#10b981", color:"#fff", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:"bold" }}>{t.icon}</div>
+                <div>
+                  <div style={{ fontSize:13, fontWeight:"bold", color:"#1e293b", marginBottom:2 }}>{t.tab}</div>
+                  <div style={{ fontSize:12, color:"#64748b", lineHeight:1.6 }}>{t.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Power Queryの基本概念 */}
+      <div onClick={() => toggle("concept")} style={{ background:"#fff", borderRadius:12, border:"2px solid "+(openItem==="concept"?"#6366f1":"#e2e8f0"), padding:"12px 16px", cursor:"pointer", transition:"all 0.15s", marginBottom: openItem==="concept" ? 0 : 8, boxShadow: openItem==="concept"?"0 0 0 3px #6366f122":"none" }}>
+        <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+          <div style={{ width:36, height:36, borderRadius:"50%", flexShrink:0, background: openItem==="concept"?"#6366f1":"#eef2ff", color: openItem==="concept"?"#fff":"#6366f1", display:"flex", alignItems:"center", justifyContent:"center", fontSize:18 }}>💡</div>
+          <div style={{ flex:1 }}>
+            <div style={{ fontSize:14, fontWeight:"bold", color:"#1e293b" }}>Power Queryの基本概念</div>
+            <div style={{ fontSize:12, color:"#64748b", marginTop:2 }}>ステップの積み重ね・クエリの使い回しについて</div>
+          </div>
+          <div style={{ color:"#94a3b8", fontSize:16, transform: openItem==="concept"?"rotate(90deg)":"rotate(0deg)", transition:"transform 0.2s" }}>▶</div>
+        </div>
+      </div>
+      {openItem==="concept" && (
+        <div style={{ background:"#eef2ff", border:"2px solid #6366f1", borderTop:"none", borderRadius:"0 0 12px 12px", padding:16, marginBottom:8, animation:"fadeIn 0.2s ease" }}>
+          {[
+            { title:"処理はステップとして積み重なる", desc:"Power Queryでの操作は「適用したステップ」として右パネルに履歴が残ります。ステップを削除すれば処理を取り消せます。" },
+            { title:"クエリは使い回せる", desc:"同じ列構造のデータなら「クエリを複製 → ソースだけ差し替え」でまったく同じ処理を別データに適用できます。" },
+            { title:"並べ替えはフィルターの前に行う", desc:"フィルター後に並べ替えると全件表示に戻れなくなります。並べ替えはフィルターより先に行うのが基本です。" },
+            { title:"マスタはクエリで結合する", desc:"手入力で属性を入れるとクエリ更新時に消えます。属性情報はマスタテーブルに管理してマージで自動紐づけするのが正解です。" },
+          ].map((c,i) => (
+            <div key={i} style={{ display:"flex", gap:10, alignItems:"flex-start", background:"#fff", borderRadius:8, padding:"10px 12px", border:"1px solid #c7d2fe", marginBottom:8 }}>
+              <div style={{ width:24, height:24, borderRadius:"50%", flexShrink:0, background:"#6366f1", color:"#fff", display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:"bold" }}>{i+1}</div>
+              <div>
+                <div style={{ fontSize:13, fontWeight:"bold", color:"#1e293b", marginBottom:2 }}>{c.title}</div>
+                <div style={{ fontSize:12, color:"#64748b", lineHeight:1.6 }}>{c.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ==============================
+// 関数リファレンス
+// ==============================
+const functionData = [
+  {
+    category: "Text関数（テキスト操作）",
+    icon: "📝",
+    color: "#0ea5e9",
+    bg: "#f0f9ff",
+    border: "#bae6fd",
+    docUrl: "https://learn.microsoft.com/ja-jp/powerquery-m/text-functions",
+    functions: [
+      { name:"Text.Select",    syntax:'Text.Select([列名], {"ぁ".."ん","ァ".."ン","一".."龯","A".."Z","a".."z"})', desc:"指定した文字種のみを抽出する。文字以外（数字・記号）を除去するのに使う。", example:'Text.Select([タイトル], {"ぁ".."ん","一".."龯"}) → 日本語のみ抽出', usage:"テキスト加工 ▶ カスタム列の数式欄" },
+      { name:"Text.Trim",      syntax:'Text.Trim([列名])', desc:"文字列の前後にある空白文字をすべて削除する。", example:'Text.Trim("  ごちうさ  ") → "ごちうさ"', usage:"変換タブ ▶ 書式 ▶ トリミング（またはカスタム列）" },
+      { name:"Text.Replace",   syntax:'Text.Replace([列名], "検索文字", "置換文字")', desc:"指定した文字列を別の文字列に置換する。", example:'Text.Replace([名前], "株式会社", "") → 会社名を削除', usage:"変換タブ ▶ 値の置換（またはカスタム列）" },
+      { name:"Text.Contains",  syntax:'Text.Contains([列名], "検索文字")', desc:"テキストに指定した文字列が含まれるか判定しtrue/falseを返す。", example:'Text.Contains([カテゴリ], "アニメ") → true/false', usage:"条件列・フィルターの条件として使用" },
+      { name:"Text.StartsWith",syntax:'Text.StartsWith([列名], "文字")', desc:"テキストが指定した文字列で始まるか判定する。", example:'Text.StartsWith([タイトル], "ご") → true/false', usage:"条件列の数式欄" },
+      { name:"Text.EndsWith",  syntax:'Text.EndsWith([列名], "文字")', desc:"テキストが指定した文字列で終わるか判定する。", example:'Text.EndsWith([ファイル名], ".csv") → true/false', usage:"条件列の数式欄" },
+      { name:"Text.Length",    syntax:'Text.Length([列名])', desc:"文字列の文字数を返す。", example:'Text.Length("ごちうさ") → 4', usage:"列の追加 ▶ カスタム列" },
+      { name:"Text.Upper",     syntax:'Text.Upper([列名])', desc:"英字をすべて大文字に変換する。", example:'Text.Upper("anime") → "ANIME"', usage:"変換タブ ▶ 書式 ▶ 大文字" },
+      { name:"Text.Lower",     syntax:'Text.Lower([列名])', desc:"英字をすべて小文字に変換する。", example:'Text.Lower("ANIME") → "anime"', usage:"変換タブ ▶ 書式 ▶ 小文字" },
+      { name:"Text.Combine",   syntax:'Text.Combine({[列1],[列2]}, "区切り文字")', desc:"複数のテキスト値を区切り文字で結合する。", example:'Text.Combine({[姓],[名]}, " ") → "山田 太郎"', usage:"列の追加 ▶ カスタム列" },
+      { name:"Text.Split",     syntax:'Text.Split([列名], "区切り文字")', desc:"区切り文字でテキストを分割してリストを返す。", example:'Text.Split("A,B,C", ",") → {"A","B","C"}', usage:"変換タブ ▶ 列の分割（またはカスタム列）" },
+      { name:"Text.From",      syntax:'Text.From([列名])', desc:"数値・日付などをテキスト型に変換する。nullが含まれる列でのText.Selectのエラー防止にも使う。", example:'Text.From(123) → "123"', usage:"カスタム列でnull対策として使用" },
+      { name:"Text.AfterDelimiter",  syntax:'Text.AfterDelimiter([列名], "区切り文字")', desc:"区切り文字の後ろのテキストを抽出する。", example:'Text.AfterDelimiter("Ⅲ-2-1", "-") → "2-1"', usage:"変換タブ ▶ 抽出 ▶ 区切り記号の後" },
+      { name:"Text.BeforeDelimiter", syntax:'Text.BeforeDelimiter([列名], "区切り文字")', desc:"区切り文字の前のテキストを抽出する。", example:'Text.BeforeDelimiter("Ⅲ-2-1", "-") → "Ⅲ"', usage:"変換タブ ▶ 抽出 ▶ 区切り記号の前" },
+    ]
+  },
+  {
+    category: "Table関数（テーブル操作）",
+    icon: "📋",
+    color: "#10b981",
+    bg: "#f0fdf4",
+    border: "#bbf7d0",
+    docUrl: "https://learn.microsoft.com/ja-jp/powerquery-m/table-functions",
+    functions: [
+      { name:"Table.AddColumn",       syntax:'Table.AddColumn(テーブル, "列名", each 計算式)', desc:"テーブルに新しい列を追加する。カスタム列ボタンの内部処理。", example:'Table.AddColumn(元テーブル, "展開用", each {1..[デザイン数]})', usage:"列の追加タブ ▶ カスタム列（自動生成される）" },
+      { name:"Table.SelectRows",      syntax:'Table.SelectRows(テーブル, each 条件)', desc:"条件を満たす行だけを抽出する。フィルター操作の内部処理。", example:'Table.SelectRows(元テーブル, each [カテゴリ] = "アニメ")', usage:"列ヘッダー ▶ フィルター（自動生成される）" },
+      { name:"Table.Sort",            syntax:'Table.Sort(テーブル, {{"列名", Order.Ascending}})', desc:"指定した列で並べ替える。並べ替え操作の内部処理。", example:'Table.Sort(元テーブル, {{"カテゴリ", Order.Ascending}})', usage:"列ヘッダー ▶ 昇順/降順（自動生成される）" },
+      { name:"Table.Group",           syntax:'Table.Group(テーブル, {"グループ列"}, {{"集計名", each 集計関数}})', desc:"指定列でグループ化して集計する。", example:'Table.Group(元テーブル, {"カテゴリ"}, {{"件数", each Table.RowCount(_)}})', usage:"ホームタブ ▶ グループ化（自動生成される）" },
+      { name:"Table.RemoveColumns",   syntax:'Table.RemoveColumns(テーブル, {"列名1","列名2"})', desc:"指定した列を削除する。", example:'Table.RemoveColumns(元テーブル, {"展開用","展開数"})', usage:"列ヘッダー ▶ 右クリック ▶ 削除（自動生成される）" },
+      { name:"Table.RenameColumns",   syntax:'Table.RenameColumns(テーブル, {{"旧名","新名"}})', desc:"列名を変更する。", example:'Table.RenameColumns(元テーブル, {{"Column1","タイトル"}})', usage:"列ヘッダー ▶ ダブルクリックで名前変更（自動生成される）" },
+      { name:"Table.ExpandTableColumn", syntax:'Table.ExpandTableColumn(テーブル, "展開列", {"取得列1","取得列2"})', desc:"テーブル型の列を展開して通常の列に変換する。マージ後の展開操作の内部処理。", example:'Table.ExpandTableColumn(マージ後, "属性マスタ", {"カテゴリ"})', usage:"↕展開ボタン操作時（自動生成される）" },
+      { name:"Table.RowCount",        syntax:'Table.RowCount(テーブル)', desc:"テーブルの行数を返す。", example:'Table.RowCount(元テーブル) → 100', usage:"カスタム列でグループ内件数を取得するときなど" },
+      { name:"Table.NestedJoin",      syntax:'Table.NestedJoin(テーブル1, "キー列1", テーブル2, "キー列2", "新列名", 結合方法)', desc:"2つのテーブルをキー列で結合する。マージ操作の内部処理。", example:'Table.NestedJoin(元データ, "タイトル", 属性マスタ, "タイトル", "マスタ", JoinKind.LeftOuter)', usage:"ホームタブ ▶ クエリの結合（自動生成される）" },
+    ]
+  },
+  {
+    category: "List関数（リスト操作）",
+    icon: "🔢",
+    color: "#8b5cf6",
+    bg: "#f5f3ff",
+    border: "#c7d2fe",
+    docUrl: "https://learn.microsoft.com/ja-jp/powerquery-m/list-functions",
+    functions: [
+      { name:"{1..n}（範囲リスト）", syntax:'{開始値..終了値}', desc:"開始値から終了値までの連番リストを生成する。行を増やす処理のコア。", example:'{1..3} → {1,2,3} / {1..[デザイン数]} → デザイン数ぶんの連番', usage:"カスタム列の数式欄に直接記述" },
+      { name:"List.Count",           syntax:'List.Count({リスト})', desc:"リストの要素数を返す。", example:'List.Count({1,2,3}) → 3', usage:"カスタム列でリストの件数を確認するとき" },
+      { name:"List.Sum",             syntax:'List.Sum({リスト})', desc:"リストの数値を合計する。", example:'List.Sum({1,2,3}) → 6', usage:"グループ化・カスタム列での集計" },
+      { name:"List.Max",             syntax:'List.Max({リスト})', desc:"リストの最大値を返す。", example:'List.Max({3,1,2}) → 3', usage:"グループ化・カスタム列での集計" },
+      { name:"List.Min",             syntax:'List.Min({リスト})', desc:"リストの最小値を返す。", example:'List.Min({3,1,2}) → 1', usage:"グループ化・カスタム列での集計" },
+      { name:"List.Distinct",        syntax:'List.Distinct({リスト})', desc:"リストから重複を除いた一意の値のリストを返す。", example:'List.Distinct({"A","B","A"}) → {"A","B"}', usage:"カスタム列でユニーク値の抽出" },
+      { name:"List.Contains",        syntax:'List.Contains({リスト}, 値)', desc:"リストに指定した値が含まれるか判定する。", example:'List.Contains({"アニメ","ゲーム"}, "アニメ") → true', usage:"条件列・カスタム列の条件判定" },
+      { name:"List.Combine",         syntax:'List.Combine({{リスト1},{リスト2}})', desc:"複数のリストを結合して1つのリストにする。", example:'List.Combine({{1,2},{3,4}}) → {1,2,3,4}', usage:"カスタム列で複数列のリストを結合するとき" },
+    ]
+  },
+  {
+    category: "Date・DateTime関数（日付操作）",
+    icon: "📅",
+    color: "#f59e0b",
+    bg: "#fffbeb",
+    border: "#fde68a",
+    docUrl: "https://learn.microsoft.com/ja-jp/powerquery-m/date-functions",
+    functions: [
+      { name:"Date.Year",        syntax:'Date.Year([日付列])', desc:"日付から年を取り出す。", example:'Date.Year(#date(2024,3,15)) → 2024', usage:"列の追加 ▶ 日付 ▶ 年" },
+      { name:"Date.Month",       syntax:'Date.Month([日付列])', desc:"日付から月を取り出す。", example:'Date.Month(#date(2024,3,15)) → 3', usage:"列の追加 ▶ 日付 ▶ 月" },
+      { name:"Date.Day",         syntax:'Date.Day([日付列])', desc:"日付から日を取り出す。", example:'Date.Day(#date(2024,3,15)) → 15', usage:"列の追加 ▶ 日付 ▶ 日" },
+      { name:"Date.DayOfWeek",   syntax:'Date.DayOfWeek([日付列])', desc:"曜日を数値（0=月〜6=日）で返す。", example:'Date.DayOfWeek(#date(2024,3,15)) → 4（金曜）', usage:"カスタム列で曜日列を作成するとき" },
+      { name:"DateTime.LocalNow",syntax:'DateTime.LocalNow()', desc:"現在の日時を返す。処理日時の記録などに使う。", example:'DateTime.LocalNow() → 現在の日時', usage:"カスタム列で「更新日時」列を作成するとき" },
+      { name:"Date.From",        syntax:'Date.From([列名])', desc:"テキスト・数値などをDate型に変換する。", example:'Date.From("2024/03/15") → #date(2024,3,15)', usage:"変換タブ ▶ データ型 ▶ 日付（またはカスタム列）" },
+    ]
+  },
+  {
+    category: "Number関数（数値操作）",
+    icon: "🔢",
+    color: "#ec4899",
+    bg: "#fdf2f8",
+    border: "#fbcfe8",
+    docUrl: "https://learn.microsoft.com/ja-jp/powerquery-m/number-functions",
+    functions: [
+      { name:"Number.Round",     syntax:'Number.Round([列名], 小数点以下桁数)', desc:"指定した桁数で四捨五入する。", example:'Number.Round(3.456, 1) → 3.5', usage:"カスタム列で計算結果を丸めるとき" },
+      { name:"Number.RoundUp",   syntax:'Number.RoundUp([列名], 桁数)', desc:"切り上げをする。", example:'Number.RoundUp(3.1, 0) → 4', usage:"カスタム列" },
+      { name:"Number.RoundDown", syntax:'Number.RoundDown([列名], 桁数)', desc:"切り捨てをする。", example:'Number.RoundDown(3.9, 0) → 3', usage:"カスタム列" },
+      { name:"Number.Abs",       syntax:'Number.Abs([列名])', desc:"絶対値を返す。", example:'Number.Abs(-5) → 5', usage:"カスタム列" },
+      { name:"Number.From",      syntax:'Number.From([列名])', desc:"テキストや他の型を数値に変換する。", example:'Number.From("123") → 123', usage:"変換タブ ▶ データ型 ▶ 整数/小数（またはカスタム列）" },
+    ]
+  },
+];
+
+function FunctionReference() {
+  const [activeCategory, setActiveCategory] = useState(null);
+  const [activeFn, setActiveFn] = useState(null);
+  const [search, setSearch] = useState("");
+
+  const filtered = functionData.map(cat => ({
+    ...cat,
+    functions: cat.functions.filter(f =>
+      f.name.toLowerCase().includes(search.toLowerCase()) ||
+      f.desc.includes(search) ||
+      f.syntax.toLowerCase().includes(search.toLowerCase())
+    )
+  })).filter(cat => cat.functions.length > 0);
+
+  return (
+    <div>
+      {/* 検索 */}
+      <div style={{ position:"relative", marginBottom:16 }}>
+        <svg style={{ position:"absolute", left:"0.75rem", top:"50%", transform:"translateY(-50%)", color:"#94a3b8" }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input value={search} onChange={e => { setSearch(e.target.value); setActiveCategory(null); setActiveFn(null); }}
+          style={{ width:"100%", padding:"0.5rem 0.75rem 0.5rem 2.5rem", border:"1px solid #e2e8f0", borderRadius:8, fontSize:"0.875rem", outline:"none", background:"#fff" }}
+          placeholder="関数名・説明で検索..." />
+      </div>
+
+      {/* 公式リンク */}
+      <div style={{ background:"#fff", border:"1px solid #e2e8f0", borderRadius:10, padding:"10px 14px", marginBottom:14, display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:8 }}>
+        <div style={{ fontSize:12, color:"#64748b" }}>
+          📖 Microsoft公式ドキュメント（Power Query M 関数リファレンス）を参照・準拠しています
+        </div>
+        <a href="https://learn.microsoft.com/ja-jp/powerquery-m/power-query-m-function-reference" target="_blank" rel="noopener noreferrer"
+          style={{ background:"#0ea5e9", color:"#fff", borderRadius:999, padding:"5px 12px", fontSize:11, fontWeight:"bold", textDecoration:"none", whiteSpace:"nowrap" }}>
+          公式サイトを開く →
+        </a>
+      </div>
+
+      {/* カテゴリ＋関数一覧 */}
+      <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:16 }}>
+        {filtered.map(cat => {
+          const isCatOpen = activeCategory === cat.category;
+          return (
+            <div key={cat.category}>
+              {/* カテゴリヘッダー */}
+              <div onClick={() => { setActiveCategory(isCatOpen ? null : cat.category); setActiveFn(null); }}
+                style={{ background:"#fff", borderRadius:12, border:"2px solid "+(isCatOpen ? cat.color : "#e2e8f0"),
+                  padding:"12px 16px", cursor:"pointer", transition:"all 0.15s",
+                  boxShadow: isCatOpen ? "0 0 0 3px "+cat.color+"22" : "none" }}>
+                <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+                  <div style={{ width:36, height:36, borderRadius:"50%", flexShrink:0,
+                    background: isCatOpen ? cat.color : cat.bg,
+                    color: isCatOpen ? "#fff" : cat.color,
+                    display:"flex", alignItems:"center", justifyContent:"center", fontSize:18 }}>{cat.icon}</div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:14, fontWeight:"bold", color:"#1e293b" }}>{cat.category}</div>
+                    <div style={{ fontSize:11, color:"#64748b", marginTop:2 }}>{cat.functions.length}個の関数</div>
+                  </div>
+                  <a href={cat.docUrl} target="_blank" rel="noopener noreferrer"
+                    onClick={e => e.stopPropagation()}
+                    style={{ background:cat.bg, color:cat.color, border:"1px solid "+cat.border, borderRadius:999, padding:"4px 10px", fontSize:10, fontWeight:"bold", textDecoration:"none", whiteSpace:"nowrap" }}>
+                    公式 →
+                  </a>
+                  <div style={{ color:"#94a3b8", fontSize:16, transform: isCatOpen?"rotate(90deg)":"rotate(0deg)", transition:"transform 0.2s" }}>▶</div>
+                </div>
+              </div>
+
+              {/* 関数一覧 */}
+              {isCatOpen && (
+                <div style={{ background:cat.bg, border:"2px solid "+cat.color, borderTop:"none",
+                  borderRadius:"0 0 12px 12px", padding:12, animation:"fadeIn 0.2s ease" }}>
+                  <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                    {cat.functions.map(fn => {
+                      const isFnOpen = activeFn === cat.category+fn.name;
+                      return (
+                        <div key={fn.name}>
+                          <div onClick={() => setActiveFn(isFnOpen ? null : cat.category+fn.name)}
+                            style={{ background:"#fff", borderRadius:8,
+                              border:"1px solid "+(isFnOpen ? cat.color : "#e2e8f0"),
+                              padding:"10px 14px", cursor:"pointer", transition:"all 0.15s" }}>
+                            <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                              <code style={{ fontSize:13, fontWeight:"bold", color:cat.color, fontFamily:"monospace", flex:1 }}>{fn.name}</code>
+                              <div style={{ color:"#94a3b8", fontSize:12, transform: isFnOpen?"rotate(90deg)":"rotate(0deg)", transition:"transform 0.2s" }}>▶</div>
+                            </div>
+                            <div style={{ fontSize:12, color:"#64748b", marginTop:4 }}>{fn.desc}</div>
+                          </div>
+                          {isFnOpen && (
+                            <div style={{ background:"#fff", border:"1px solid "+cat.color, borderTop:"none",
+                              borderRadius:"0 0 8px 8px", padding:"12px 14px", animation:"fadeIn 0.15s ease" }}>
+                              <div style={{ marginBottom:10 }}>
+                                <div style={{ fontSize:10, fontWeight:"bold", color:"#64748b", marginBottom:4 }}>📌 構文</div>
+                                <code style={{ display:"block", background:cat.bg, border:"1px solid "+cat.border,
+                                  borderRadius:6, padding:"8px 12px", fontSize:12, color:"#1e293b", fontFamily:"monospace", lineHeight:1.6, wordBreak:"break-all" }}>
+                                  {fn.syntax}
+                                </code>
+                              </div>
+                              <div style={{ marginBottom:10 }}>
+                                <div style={{ fontSize:10, fontWeight:"bold", color:"#64748b", marginBottom:4 }}>💡 使用例</div>
+                                <code style={{ display:"block", background:"#f8fafc", border:"1px solid #e2e8f0",
+                                  borderRadius:6, padding:"8px 12px", fontSize:12, color:"#374151", fontFamily:"monospace", lineHeight:1.6 }}>
+                                  {fn.example}
+                                </code>
+                              </div>
+                              <div>
+                                <div style={{ fontSize:10, fontWeight:"bold", color:"#64748b", marginBottom:4 }}>🖥️ 画面上の操作場所</div>
+                                <div style={{ background:cat.bg, border:"1px solid "+cat.border, borderRadius:6, padding:"6px 12px", fontSize:12, color:"#374151" }}>
+                                  {fn.usage}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ==============================
+// コードジェネレーター
+// ==============================
+function CodeGenerator() {
+  const { useState: useS, useCallback } = React;
+
+  // --- 共通ユーティリティ ---
+  const [copied, setCopied] = useS(null);
+  const copy = (text, key) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(key);
+      setTimeout(() => setCopied(null), 2000);
+    });
+  };
+
+  const CopyBtn = ({ text, id, color="#b45309" }) => (
+    <button onClick={() => copy(text, id)} style={{
+      background: copied===id ? "#16a34a" : color,
+      color:"#fff", border:"none", borderRadius:6, padding:"6px 14px",
+      fontSize:11, fontWeight:"bold", cursor:"pointer", fontFamily:"inherit",
+      transition:"background 0.2s", whiteSpace:"nowrap", flexShrink:0
+    }}>
+      {copied===id ? "✅ コピー済み" : "📋 コピー"}
+    </button>
+  );
+
+  const CodeBox = ({ code, id, color }) => (
+    <div style={{ position:"relative", marginTop:8 }}>
+      <pre style={{
+        background:"#1e293b", color:"#7dd3fc", borderRadius:8,
+        padding:"12px 14px", fontSize:12, fontFamily:"monospace",
+        lineHeight:1.7, overflowX:"auto", margin:0, whiteSpace:"pre-wrap", wordBreak:"break-all"
+      }}>{code}</pre>
+      <div style={{ position:"absolute", top:8, right:8 }}>
+        <CopyBtn text={code} id={id} color={color||"#b45309"} />
+      </div>
+    </div>
+  );
+
+  // === 列名エスケープ関数（特殊文字・記号・スペース含む列名を自動で #"..." 形式に変換）===
+  const col = (name) => {
+    // 英数字とアンダースコアのみで構成されている場合はそのまま [列名]
+    if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(name)) return `[${name}]`;
+    // それ以外（日本語・記号・スペース・【】№など）は [#"列名"] 形式
+    return `[#"${name}"]`;
+  };
+
+  // === パターン①：基本連結 ===
+  const [p1Cols, setP1Cols] = useS(["SheetName","No"]);
+  const [p1Delim, setP1Delim] = useS("-");
+  const [p1Input, setP1Input] = useS("");
+  const addP1Col = () => { if(p1Input.trim()) { setP1Cols([...p1Cols, p1Input.trim()]); setP1Input(""); }};
+  const removeP1Col = (i) => setP1Cols(p1Cols.filter((_,idx)=>idx!==i));
+  const genP1 = () => p1Cols.map(c => col(c)).join(` & "${p1Delim}" & `);
+
+  // === パターン②：ゼロ埋めID ===
+  const [p2Prefix, setP2Prefix] = useS("SheetName");
+  const [p2No, setP2No] = useS("No");
+  const [p2Delim, setP2Delim] = useS("-");
+  const [p2Pad, setP2Pad] = useS("3");
+  const genP2 = () =>
+    `${col(p2Prefix)} & "${p2Delim}" & Text.PadStart(Text.From(${col(p2No)}), ${p2Pad}, "0")`;
+
+  // === パターン③：null安全連結 ===
+  const [p3Cols, setP3Cols] = useS(["Major","Minor"]);
+  const [p3Delim, setP3Delim] = useS(" / ");
+  const [p3Input, setP3Input] = useS("");
+  const addP3Col = () => { if(p3Input.trim()) { setP3Cols([...p3Cols, p3Input.trim()]); setP3Input(""); }};
+  const removeP3Col = (i) => setP3Cols(p3Cols.filter((_,idx)=>idx!==i));
+  const genP3 = () => {
+    const items = p3Cols.map(c=>`        ${col(c)}`).join(",\n");
+    return `Text.Combine(\n    List.RemoveNulls({\n${items}\n    }),\n    "${p3Delim}"\n)`;
+  };
+
+  // === パターン④：条件付き連結 ===
+  const [p4Col1, setP4Col1] = useS("Major");
+  const [p4Col2, setP4Col2] = useS("Minor");
+  const [p4Open, setP4Open] = useS("（");
+  const [p4Close, setP4Close] = useS("）");
+  const genP4 = () =>
+    `if ${col(p4Col2)} <> null then\n    ${col(p4Col1)} & "${p4Open}" & ${col(p4Col2)} & "${p4Close}"\nelse\n    ${col(p4Col1)}`;
+
+  // === パターン⑤：Copilot/AI入力用 ===
+  const [p5Cols, setP5Cols] = useS(["Major","Minor","No","QuestionText"]);
+  const [p5Delim, setP5Delim] = useS("｜");
+  const [p5Input, setP5Input] = useS("");
+  const [p5UseNo, setP5UseNo] = useS(true);
+  const [p5NoCol, setP5NoCol] = useS("No");
+  const [p5NoPrefix, setP5NoPrefix] = useS("設問");
+  const addP5Col = () => { if(p5Input.trim()) { setP5Cols([...p5Cols, p5Input.trim()]); setP5Input(""); }};
+  const removeP5Col = (i) => setP5Cols(p5Cols.filter((_,idx)=>idx!==i));
+  const genP5 = () => {
+    const items = p5Cols.map((c) => {
+      if(p5UseNo && c===p5NoCol) return `        "${p5NoPrefix}" & Text.From(${col(c)})`;
+      return `        ${col(c)}`;
+    }).join(",\n");
+    return `Text.Combine(\n    List.RemoveNulls({\n${items}\n    }),\n    "${p5Delim}"\n)`;
+  };
+
+  // === パターン⑥：改行区切り ===
+  const [p6Cols, setP6Cols] = useS(["Major","Minor","QuestionText"]);
+  const [p6Input, setP6Input] = useS("");
+  const addP6Col = () => { if(p6Input.trim()) { setP6Cols([...p6Cols, p6Input.trim()]); setP6Input(""); }};
+  const removeP6Col = (i) => setP6Cols(p6Cols.filter((_,idx)=>idx!==i));
+  const genP6 = () => {
+    const items = p6Cols.map(c=>`        ${col(c)}`).join(",\n");
+    return `Text.Combine(\n    List.RemoveNulls({\n${items}\n    }),\n    "#(lf)"\n)`;
+  };
+
+  // === パターン⑦：カスタム関数定義 ===
+  const [p7Name, setP7Name] = useS("fnCombineSafe");
+  const genP7def = () =>
+    `(cols as list, delimiter as text) as text =>\n    Text.Combine(\n        List.RemoveNulls(cols),\n        delimiter\n    )`;
+  const [p7Cols, setP7Cols] = useS(["Major","Minor","No"]);
+  const [p7Delim, setP7Delim] = useS(" / ");
+  const [p7Input, setP7Input] = useS("");
+  const [p7NoCol, setP7NoCol] = useS("No");
+  const [p7UseNo, setP7UseNo] = useS(true);
+  const addP7Col = () => { if(p7Input.trim()) { setP7Cols([...p7Cols, p7Input.trim()]); setP7Input(""); }};
+  const removeP7Col = (i) => setP7Cols(p7Cols.filter((_,idx)=>idx!==i));
+  const genP7use = () => {
+    const items = p7Cols.map(c => {
+      if(p7UseNo && c===p7NoCol) return `Text.From(${col(c)})`;
+      return col(c);
+    }).join(", ");
+    return `${p7Name}({${items}}, "${p7Delim}")`;
+  };
+
+  // --- 共通スタイル ---
+  const labelStyle = { fontSize:11, fontWeight:"bold", color:"#78350f", marginBottom:4, display:"block" };
+  const inputStyle = { border:"1px solid #fed7aa", borderRadius:6, padding:"6px 10px", fontSize:13, fontFamily:"inherit", outline:"none", background:"#fff", width:"100%" };
+  const tagStyle = (c, onRemove) => (
+    <span key={c} style={{ display:"inline-flex", alignItems:"center", gap:4, background:"#fff7ed", border:"1px solid #fed7aa", borderRadius:999, padding:"3px 10px", fontSize:12, color:"#92400e" }}>
+      {col(c)}
+      <button onClick={onRemove} style={{ background:"none", border:"none", cursor:"pointer", color:"#ef4444", fontSize:14, lineHeight:1, padding:0, fontWeight:"bold" }}>×</button>
+    </span>
+  );
+  const sectionStyle = (color="#b45309", bg="#fffbeb", border="#fed7aa") => ({
+    background:"#fff", border:"2px solid "+border, borderRadius:12, padding:20, marginBottom:12
+  });
+  const h3Style = { fontSize:14, fontWeight:"bold", color:"#1e293b", marginBottom:4 };
+  const descStyle = { fontSize:12, color:"#64748b", marginBottom:14, lineHeight:1.6 };
+  const tipStyle = { background:"#fff7ed", border:"1px solid #fed7aa", borderRadius:8, padding:"8px 12px", fontSize:12, color:"#92400e", marginBottom:12 };
+
+  const ColInput = ({ cols, input, setInput, onAdd, onRemove }) => (
+    <div>
+      <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:8 }}>
+        {cols.map((c,i) => tagStyle(c, ()=>onRemove(i)))}
+      </div>
+      <div style={{ display:"flex", gap:6 }}>
+        <input value={input} onChange={e=>setInput(e.target.value)}
+          onKeyDown={e=>{ if(e.key==="Enter"){ e.preventDefault(); onAdd(); }}}
+          placeholder="列名を入力してEnter" style={{...inputStyle, flex:1}} />
+        <button onClick={onAdd} style={{ background:"#b45309", color:"#fff", border:"none", borderRadius:6, padding:"6px 14px", fontSize:12, cursor:"pointer", fontFamily:"inherit", whiteSpace:"nowrap" }}>追加</button>
+      </div>
+    </div>
+  );
+
+  const patterns = [
+    {
+      key:"p1", num:"①", title:"基本連結（シンプルな列結合）",
+      badge:"基本", badgeBg:"#f1f5f9", badgeColor:"#475569",
+      desc:"複数の列を区切り文字でそのまま結合します。すべての列に値がある前提の場合に使います。",
+      tip:"⚠️ nullが含まれると結果全体がnullになります。nullの可能性がある場合は③を使ってください。",
+      form: (
+        <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+          <div>
+            <label style={labelStyle}>結合する列（順番に追加）</label>
+            <ColInput cols={p1Cols} input={p1Input} setInput={setP1Input} onAdd={addP1Col} onRemove={removeP1Col} />
+          </div>
+          <div>
+            <label style={labelStyle}>区切り文字</label>
+            <input value={p1Delim} onChange={e=>setP1Delim(e.target.value)} style={{...inputStyle, width:"auto", minWidth:80}} />
+            <span style={{ fontSize:11, color:"#94a3b8", marginLeft:8 }}>例: - / ｜ スペース</span>
+          </div>
+        </div>
+      ),
+      genCode: genP1,
+    },
+    {
+      key:"p2", num:"②", title:"ゼロ埋めID生成（質問ID・管理番号）",
+      badge:"IDに最適", badgeBg:"#f0fdf4", badgeColor:"#166534",
+      desc:"「シート名-001」のようなゼロ埋めの識別IDを生成します。質問番号・管理番号の自動付番に最適です。",
+      tip:"💡 桁数は「3」なら001〜999、「4」なら0001〜9999になります。",
+      form: (
+        <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
+            <div>
+              <label style={labelStyle}>プレフィックス列</label>
+              <input value={p2Prefix} onChange={e=>setP2Prefix(e.target.value)} style={inputStyle} placeholder="例: SheetName" />
+            </div>
+            <div>
+              <label style={labelStyle}>番号列</label>
+              <input value={p2No} onChange={e=>setP2No(e.target.value)} style={inputStyle} placeholder="例: No" />
+            </div>
+            <div>
+              <label style={labelStyle}>区切り文字</label>
+              <input value={p2Delim} onChange={e=>setP2Delim(e.target.value)} style={inputStyle} placeholder="例: -" />
+            </div>
+            <div>
+              <label style={labelStyle}>ゼロ埋め桁数</label>
+              <input value={p2Pad} onChange={e=>setP2Pad(e.target.value.replace(/[^0-9]/g,""))} style={inputStyle} placeholder="例: 3" type="number" min="1" max="6" />
+            </div>
+          </div>
+          <div style={{ background:"#f8fafc", borderRadius:8, padding:"8px 12px", fontSize:12, color:"#64748b" }}>
+            プレビュー：<strong style={{color:"#1e293b"}}>[{p2Prefix}] → 例「経営管理」、[{p2No}] → 例「1」のとき… 「経営管理{p2Delim}{"0".repeat(Math.max(0,parseInt(p2Pad||1)-1))}1」</strong>
+          </div>
+        </div>
+      ),
+      genCode: genP2,
+    },
+    {
+      key:"p3", num:"③", title:"null安全な列結合（実務の鉄板）",
+      badge:"強くおすすめ", badgeBg:"#f0f9ff", badgeColor:"#0369a1",
+      desc:"nullが混在していても壊れない安全な結合です。List.RemoveNullsでnullを自動除去してから結合するため、片方がnullでも正常に動作します。実務ではこれを基本にするのがおすすめです。",
+      tip:"✅ どちらかがnullでも結果がnullにならない。列が増えてもListに追加するだけで拡張できます。",
+      form: (
+        <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+          <div>
+            <label style={labelStyle}>結合する列（順番に追加）</label>
+            <ColInput cols={p3Cols} input={p3Input} setInput={setP3Input} onAdd={addP3Col} onRemove={removeP3Col} />
+          </div>
+          <div>
+            <label style={labelStyle}>区切り文字</label>
+            <input value={p3Delim} onChange={e=>setP3Delim(e.target.value)} style={{...inputStyle, width:"auto", minWidth:120}} />
+            <span style={{ fontSize:11, color:"#94a3b8", marginLeft:8 }}>例: " / " " ｜ " "　"（全角スペース）</span>
+          </div>
+        </div>
+      ),
+      genCode: genP3,
+    },
+    {
+      key:"p4", num:"④", title:"条件付き結合（列がある時だけ括弧つき表示）",
+      badge:"表示制御", badgeBg:"#f5f3ff", badgeColor:"#5b21b6",
+      desc:"「Minorがある場合は（括弧）つきで表示、ない場合はMajorだけ」のような条件分岐表示に使います。",
+      tip:"💡 if〜then〜elseはM言語の基本的な分岐構文です。",
+      form: (
+        <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
+            <div>
+              <label style={labelStyle}>メイン列（常に表示）</label>
+              <input value={p4Col1} onChange={e=>setP4Col1(e.target.value)} style={inputStyle} placeholder="例: Major" />
+            </div>
+            <div>
+              <label style={labelStyle}>サブ列（nullの場合は非表示）</label>
+              <input value={p4Col2} onChange={e=>setP4Col2(e.target.value)} style={inputStyle} placeholder="例: Minor" />
+            </div>
+            <div>
+              <label style={labelStyle}>開き括弧</label>
+              <input value={p4Open} onChange={e=>setP4Open(e.target.value)} style={inputStyle} placeholder="例: （" />
+            </div>
+            <div>
+              <label style={labelStyle}>閉じ括弧</label>
+              <input value={p4Close} onChange={e=>setP4Close(e.target.value)} style={inputStyle} placeholder="例: ）" />
+            </div>
+          </div>
+          <div style={{ background:"#f8fafc", borderRadius:8, padding:"8px 12px", fontSize:12, color:"#64748b" }}>
+            プレビュー：<strong style={{color:"#1e293b"}}>[{p4Col2}]あり → [{p4Col1}]{p4Open}[{p4Col2}]{p4Close} ／ [{p4Col2}]なし → [{p4Col1}]のみ</strong>
+          </div>
+        </div>
+      ),
+      genCode: genP4,
+    },
+    {
+      key:"p5", num:"⑤", title:"Copilot・AI入力用の1セルテキスト生成",
+      badge:"AI活用", badgeBg:"#fdf2f8", badgeColor:"#9d174d",
+      desc:"CopilotやAIに渡すための「1セル＝1設問テキスト」を作ります。見出し・番号・質問文を区切り文字で連結し、AI処理がしやすい形にします。",
+      tip:"💡 区切り文字に「｜」や「#(lf)（改行）」を使うとAIが文脈を区切りやすくなります。",
+      form: (
+        <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+          <div>
+            <label style={labelStyle}>結合する列（順番に追加）</label>
+            <ColInput cols={p5Cols} input={p5Input} setInput={setP5Input} onAdd={addP5Col} onRemove={removeP5Col} />
+          </div>
+          <div style={{ display:"flex", alignItems:"center", gap:10, background:"#fdf2f8", border:"1px solid #fbcfe8", borderRadius:8, padding:"10px 12px" }}>
+            <input type="checkbox" id="p5useNo" checked={p5UseNo} onChange={e=>setP5UseNo(e.target.checked)} style={{ width:16, height:16, cursor:"pointer" }} />
+            <label htmlFor="p5useNo" style={{ fontSize:12, color:"#9d174d", cursor:"pointer", fontWeight:"bold" }}>番号列に「設問」などのプレフィックスをつける</label>
+          </div>
+          {p5UseNo && (
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
+              <div>
+                <label style={labelStyle}>番号が入っている列名</label>
+                <input value={p5NoCol} onChange={e=>setP5NoCol(e.target.value)} style={inputStyle} placeholder="例: No" />
+              </div>
+              <div>
+                <label style={labelStyle}>プレフィックス文字</label>
+                <input value={p5NoPrefix} onChange={e=>setP5NoPrefix(e.target.value)} style={inputStyle} placeholder="例: 設問" />
+              </div>
+            </div>
+          )}
+          <div>
+            <label style={labelStyle}>区切り文字</label>
+            <input value={p5Delim} onChange={e=>setP5Delim(e.target.value)} style={{...inputStyle, width:"auto", minWidth:120}} />
+            <span style={{ fontSize:11, color:"#94a3b8", marginLeft:8 }}>例: ｜ / &lt;改行したい場合は #(lf)&gt;</span>
+          </div>
+        </div>
+      ),
+      genCode: genP5,
+    },
+    {
+      key:"p6", num:"⑥", title:"改行区切りで結合（読みやすさ重視）",
+      badge:"可読性", badgeBg:"#f0fdf4", badgeColor:"#065f46",
+      desc:"列の値を改行で区切って縦に並べます。Excelセル内改行で階層構造を視覚的に表現したい場合に使います。",
+      tip:"💡 #(lf)はM言語での改行コードです。",
+      form: (
+        <div>
+          <label style={labelStyle}>結合する列（順番に追加）</label>
+          <ColInput cols={p6Cols} input={p6Input} setInput={setP6Input} onAdd={addP6Col} onRemove={removeP6Col} />
+        </div>
+      ),
+      genCode: genP6,
+    },
+    {
+      key:"p7", num:"⑦", title:"カスタム関数化（複数クエリで使い回す）",
+      badge:"上級・再利用", badgeBg:"#fffbeb", badgeColor:"#92400e",
+      desc:"null安全な結合処理を「関数」として定義し、複数のクエリから呼び出せるようにします。200問・5シートのような大規模でも保守が楽になります。",
+      tip:"📌 使い方：① 空のクエリを作成 → ② 詳細エディターに「関数定義コード」を貼り付け → ③ 任意の名前で保存 → ④ カスタム列でその関数名を呼び出す",
+      form: (
+        <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+          <div>
+            <label style={labelStyle}>関数名（自由に決めてOK）</label>
+            <input value={p7Name} onChange={e=>setP7Name(e.target.value.replace(/\s/g,""))} style={{...inputStyle, width:"auto", minWidth:180}} placeholder="例: fnCombineSafe" />
+          </div>
+          <div style={{ background:"#f8fafc", border:"1px solid #e2e8f0", borderRadius:8, padding:10 }}>
+            <div style={{ fontSize:11, fontWeight:"bold", color:"#64748b", marginBottom:6 }}>📋 STEP 1 — 詳細エディターに貼り付ける「関数定義コード」</div>
+            <CodeBox code={genP7def()} id="p7def" color="#78350f" />
+          </div>
+          <div style={{ background:"#f8fafc", border:"1px solid #e2e8f0", borderRadius:8, padding:10 }}>
+            <div style={{ fontSize:11, fontWeight:"bold", color:"#64748b", marginBottom:8 }}>📋 STEP 2 — カスタム列での呼び出し式を生成する</div>
+            <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+              <div>
+                <label style={labelStyle}>結合する列</label>
+                <ColInput cols={p7Cols} input={p7Input} setInput={setP7Input} onAdd={addP7Col} onRemove={removeP7Col} />
+              </div>
+              <div style={{ display:"flex", alignItems:"center", gap:10, background:"#fff7ed", border:"1px solid #fed7aa", borderRadius:8, padding:"8px 12px" }}>
+                <input type="checkbox" id="p7useNo" checked={p7UseNo} onChange={e=>setP7UseNo(e.target.checked)} style={{ width:16, height:16, cursor:"pointer" }} />
+                <label htmlFor="p7useNo" style={{ fontSize:12, color:"#92400e", cursor:"pointer", fontWeight:"bold" }}>番号列をText.From()でテキスト変換する</label>
+              </div>
+              {p7UseNo && (
+                <div>
+                  <label style={labelStyle}>テキスト変換する列名</label>
+                  <input value={p7NoCol} onChange={e=>setP7NoCol(e.target.value)} style={{...inputStyle, width:"auto", minWidth:160}} placeholder="例: No" />
+                </div>
+              )}
+              <div>
+                <label style={labelStyle}>区切り文字</label>
+                <input value={p7Delim} onChange={e=>setP7Delim(e.target.value)} style={{...inputStyle, width:"auto", minWidth:120}} placeholder="例: / " />
+              </div>
+            </div>
+          </div>
+        </div>
+      ),
+      genCode: genP7use,
+      hideMainCode: true,
+      extraCode: { label:"カスタム列で使う呼び出し式", code: ()=>genP7use(), id:"p7use" },
+    },
+  ];
+
+  const [activePattern, setActivePattern] = useS(null);
+  const toggle = (key) => setActivePattern(prev => prev===key ? null : key);
+
+  return (
+    <div>
+      {/* 説明 */}
+      <div style={{ background:"#fff", border:"1px solid #e2e8f0", borderRadius:10, padding:"12px 16px", marginBottom:14, fontSize:12, color:"#64748b", lineHeight:1.7 }}>
+        🛠️ パターンをクリックして展開 → 列名・区切り文字を入力 → <strong style={{color:"#1e293b"}}>コピーボタンでそのままPower Queryに貼り付けられるMコードが完成</strong>します。
+      </div>
+
+      {/* アコーディオン */}
+      <div style={{ display:"flex", flexDirection:"column", gap:8, marginBottom:16 }}>
+        {patterns.map(p => {
+          const isOpen = activePattern===p.key;
+          return (
+            <div key={p.key}>
+              {/* ヘッダー（クリックで開閉） */}
+              <div
+                onClick={()=>toggle(p.key)}
+                style={{
+                  background: isOpen ? "#78350f" : "#fff",
+                  border:"2px solid "+(isOpen ? "#78350f" : "#e2e8f0"),
+                  borderRadius: isOpen ? "12px 12px 0 0" : 12,
+                  padding:"12px 16px", cursor:"pointer",
+                  transition:"all 0.15s",
+                  boxShadow: isOpen ? "0 0 0 3px #b4530922" : "none",
+                  userSelect:"none",
+                }}
+              >
+                <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                  <div style={{
+                    width:32, height:32, borderRadius:"50%", flexShrink:0,
+                    background: isOpen ? "rgba(255,255,255,0.18)" : "#fff7ed",
+                    color: isOpen ? "#fff" : "#b45309",
+                    display:"flex", alignItems:"center", justifyContent:"center",
+                    fontSize:14, fontWeight:"bold",
+                  }}>{p.num}</div>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontSize:13, fontWeight:"bold", color: isOpen?"#fff":"#1e293b" }}>{p.title}</div>
+                    {!isOpen && <div style={{ fontSize:11, color:"#94a3b8", marginTop:2 }}>{p.desc.slice(0,40)}…</div>}
+                  </div>
+                  <span style={{
+                    background: isOpen ? "rgba(255,255,255,0.15)" : p.badgeBg,
+                    color: isOpen ? "#fff" : p.badgeColor,
+                    fontSize:10, fontWeight:"bold", padding:"2px 8px", borderRadius:999, whiteSpace:"nowrap", marginRight:6
+                  }}>{p.badge}</span>
+                  <span style={{
+                    color: isOpen ? "#fff" : "#94a3b8", fontSize:14,
+                    transform: isOpen ? "rotate(90deg)" : "rotate(0deg)",
+                    transition:"transform 0.2s", display:"inline-block", flexShrink:0
+                  }}>▶</span>
+                </div>
+              </div>
+
+              {/* 展開エリア */}
+              {isOpen && (
+                <div style={{
+                  background:"#fffbeb",
+                  border:"2px solid #78350f", borderTop:"none",
+                  borderRadius:"0 0 12px 12px",
+                  padding:20,
+                  animation:"fadeIn 0.18s ease",
+                }}>
+                  {/* 説明 */}
+                  <div style={{ fontSize:12, color:"#64748b", lineHeight:1.7, marginBottom:10 }}>{p.desc}</div>
+                  <div style={tipStyle}>{p.tip}</div>
+
+                  {/* 設定フォーム */}
+                  <div style={{ background:"#fff", border:"1px solid #fde68a", borderRadius:10, padding:16, marginBottom:14 }}>
+                    <div style={{ fontSize:11, fontWeight:"bold", color:"#92400e", marginBottom:10 }}>⚙️ 設定</div>
+                    {p.form}
+                  </div>
+
+                  {/* 生成コード */}
+                  {!p.hideMainCode && (
+                    <div>
+                      <div style={{ fontSize:11, fontWeight:"bold", color:"#64748b", marginBottom:4 }}>✨ 生成されたMコード（カスタム列の数式欄にコピペ）</div>
+                      <CodeBox code={p.genCode()} id={p.key} />
+                    </div>
+                  )}
+                  {p.hideMainCode && p.extraCode && (
+                    <div>
+                      <div style={{ fontSize:11, fontWeight:"bold", color:"#64748b", marginBottom:4 }}>✨ {p.extraCode.label}</div>
+                      <CodeBox code={p.extraCode.code()} id={p.extraCode.id} />
+                    </div>
+                  )}
+
+                  {/* 貼り付け場所メモ */}
+                  <div style={{ marginTop:14, background:"#f8fafc", border:"1px solid #e2e8f0", borderRadius:8, padding:"10px 14px" }}>
+                    <div style={{ fontSize:11, fontWeight:"bold", color:"#64748b", marginBottom:4 }}>🖥️ Power Queryでの貼り付け場所</div>
+                    <div style={{ fontSize:12, color:"#374151", lineHeight:1.7 }}>
+                      <strong>列の追加タブ</strong> → <strong>カスタム列</strong> → 「カスタム列の数式」欄に貼り付け → OK
+                      {p.key==="p7" && <><br/><strong>※ 関数定義コードは</strong>：ホームタブ → 新しいクエリ → 空のクエリ → 詳細エディター に貼り付けて保存</>}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ==============================
+// メインApp
+// ==============================
+function App() {
+  const [mainTab, setMainTab] = useState("intro");
+
+  const tabs = [
+    { key:"intro",      label:"📖 はじめに",           activeColor:"#0f766e" },
+    { key:"home",       label:"🏠 ホームタブ操作",      activeColor:"#1e293b" },
+    { key:"rowexpand",  label:"📊 行を増やす処理",      activeColor:"#6366f1" },
+    { key:"sortfilter", label:"↕️ 並べ替え・絞込み",    activeColor:"#0ea5e9" },
+    { key:"text",       label:"📝 テキスト加工",        activeColor:"#10b981" },
+    { key:"master",     label:"🔗 マスタ管理",          activeColor:"#8b5cf6" },
+    { key:"functions",  label:"📚 関数リファレンス",    activeColor:"#db2777" },
+    { key:"generator", label:"⚙️ 式ジェネレーター",    activeColor:"#b45309" },
+  ];
+
+  const headerConfig = {
+    intro: {
+      bg:"linear-gradient(135deg,#0f766e 0%,#14b8a6 100%)",
+      label:"GETTING STARTED", title:"Power Query マニュアル — はじめに",
+      sub:"できること・エディターのタブ説明・基本概念",
+      badges:[{label:"ボタン操作中心",icon:"🖱️"},{label:"タブ一覧",icon:"🗂️"},{label:"基本概念",icon:"💡"}],
+    },
+    home: {
+      bg:"linear-gradient(135deg,#1e293b 0%,#334155 100%)",
+      label:"HOME TAB GUIDE", title:"ホームタブの基本操作",
+      sub:"データ取込・マージ・グループ化・書き出し",
+      badges:[{label:"全6ステップ",icon:"📋"},{label:"Q&A付き",icon:"💬"},{label:"ボタン操作",icon:"🖱️"}],
+    },
+    rowexpand: {
+      bg:"linear-gradient(135deg,#4338ca 0%,#6366f1 100%)",
+      label:"ROW EXPAND GUIDE", title:"行を増やす処理",
+      sub:"デザイン数の値だけ行を複製する — null対処→リスト生成→展開",
+      badges:[{label:"全4ステップ",icon:"📋"},{label:"null対処あり",icon:"🔧"},{label:"Q&A付き",icon:"💬"}],
+    },
+    sortfilter: {
+      bg:"linear-gradient(135deg,#0369a1 0%,#0ea5e9 100%)",
+      label:"SORT & FILTER GUIDE", title:"並べ替え・フィルター",
+      sub:"列の並べ替え・絞り込み・カテゴリ内の種類を揃える",
+      badges:[{label:"条件列を活用",icon:"🗂️"},{label:"注意事項あり",icon:"⚠️"},{label:"Q&A付き",icon:"💬"}],
+    },
+    text: {
+      bg:"linear-gradient(135deg,#065f46 0%,#10b981 100%)",
+      label:"TEXT PROCESS GUIDE", title:"テキスト加工",
+      sub:"文字削除・抽出・データ型変換など列の整形処理",
+      badges:[{label:"値の置換",icon:"✂️"},{label:"Text.Select活用",icon:"📝"},{label:"型変換",icon:"🔄"}],
+    },
+    master: {
+      bg:"linear-gradient(135deg,#5b21b6 0%,#8b5cf6 100%)",
+      label:"MASTER DATA GUIDE", title:"マスタ管理・突合",
+      sub:"属性マスタ作成・正規化・マージで属性を自動紐づけ",
+      badges:[{label:"表記ゆれ対応",icon:"🔡"},{label:"マージ活用",icon:"🔗"},{label:"Q&A付き",icon:"💬"}],
+    },
+    functions: {
+      bg:"linear-gradient(135deg,#9d174d 0%,#db2777 100%)",
+      label:"FUNCTION REFERENCE", title:"M言語 関数リファレンス",
+      sub:"Microsoft公式ドキュメントに基づく関数一覧 — よく使う関数を厳選して業務例付きで解説",
+      badges:[{label:"Text関数",icon:"📝"},{label:"Table関数",icon:"📋"},{label:"List関数",icon:"🔢"},{label:"Date関数",icon:"📅"}],
+    },
+    generator: {
+      bg:"linear-gradient(135deg,#78350f 0%,#b45309 100%)",
+      label:"CODE GENERATOR", title:"M式 コードジェネレーター",
+      sub:"列名・区切り文字を入力するだけでそのままコピペできるMコードを自動生成",
+      badges:[{label:"列結合",icon:"🔗"},{label:"ID生成",icon:"🔢"},{label:"null安全",icon:"🛡️"},{label:"カスタム関数",icon:"⚙️"}],
+    },
+  };
+
+  const h = headerConfig[mainTab];
+
+  return (
+    <div style={{ fontFamily:"'Hiragino Sans','Yu Gothic','Meiryo',sans-serif", width:"100%", minHeight:"100vh", padding:16, background:"#f8fafc" }}>
+      <div className="tabs-container" style={{ display:"flex", gap:4, marginBottom:0, overflow:"hidden" }}>
+        {tabs.map(tab => {
+          const isActive = mainTab === tab.key;
+          return (
+            <button key={tab.key} onClick={() => setMainTab(tab.key)} title={tab.label} style={{
+              padding:"10px 0", border:"2px solid",
+              borderColor: isActive ? tab.activeColor : "#e2e8f0",
+              borderBottom: isActive ? "none" : "2px solid #e2e8f0",
+              cursor:"pointer", fontFamily:"inherit", fontWeight:"bold",
+              borderRadius:"10px 10px 0 0",
+              background: isActive ? tab.activeColor : "#e2e8f0",
+              color: isActive ? "#fff" : "#64748b",
+              transition:"all 0.15s",
+              position:"relative", zIndex: isActive ? 2 : 1,
+              marginBottom: isActive ? "-2px" : 0,
+              flex:"1 1 0", minWidth:0, overflow:"hidden", whiteSpace:"nowrap",
+            }}>
+              <span style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6, paddingLeft:8, paddingRight:8 }}>
+                <span style={{ fontSize:15, flexShrink:0 }}>{tab.label.match(/^(\S+)/)[1]}</span>
+                <span className="tab-label">{tab.label.replace(/^\S+\s*/,"")}</span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div style={{ background:h.bg, borderRadius:"0 10px 10px 10px", padding:"20px 24px", marginBottom:16, color:"#fff", position:"relative", zIndex:1 }}>
+        <div style={{ fontSize:11, opacity:0.6, marginBottom:4, letterSpacing:"0.1em" }}>{h.label}</div>
+        <div style={{ fontSize:22, fontWeight:"bold", marginBottom:4 }}>{h.title}</div>
+        <div style={{ fontSize:12, opacity:0.75 }}>{h.sub}</div>
+        <div style={{ marginTop:12, display:"flex", flexWrap:"wrap", gap:8 }}>
+          {h.badges.map(b => (
+            <span key={b.label} style={{ background:"rgba(255,255,255,0.12)", borderRadius:20, padding:"4px 12px", fontSize:11 }}>{b.icon} {b.label}</span>
+          ))}
+        </div>
+      </div>
+
+      {mainTab==="intro"      && <IntroGuide setMainTab={setMainTab} />}
+      {mainTab==="home"       && <StepList steps={homeSteps} />}
+      {mainTab==="rowexpand"  && <StepList steps={rowExpandSteps} />}
+      {mainTab==="sortfilter" && <StepList steps={sortFilterSteps} />}
+      {mainTab==="text"       && <StepList steps={textSteps} />}
+      {mainTab==="master"     && <StepList steps={masterSteps} />}
+      {mainTab==="functions"  && <FunctionReference />}
+      {mainTab==="generator"  && <CodeGenerator />}
+
+      <div style={{ background:"linear-gradient(135deg,#0f172a,#1e293b)", borderRadius:12, padding:"16px 20px", color:"#fff", marginTop:16 }}>
+        <div style={{ fontSize:13, fontWeight:"bold", marginBottom:10 }}>💡 Power Queryの設計原則</div>
+        <div style={{ background:"rgba(255,255,255,0.08)", borderRadius:8, padding:"10px 14px", fontFamily:"monospace", fontSize:12, color:"#7dd3fc", marginBottom:8 }}>
+          処理はステップで積み重ねる → クエリは使い回す → 属性はマスタで管理する
+        </div>
+        <div style={{ fontSize:11, color:"#94a3b8" }}>更新するときは「ホームタブ → 更新」だけでOK。クエリを再構築する必要はありません。</div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
+  </script>
+</body>
+</html>
