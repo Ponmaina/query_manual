@@ -3,6 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="ExcelのPower Queryエディターを使ったデータ整形・結合・行複製・テキスト加工の操作手順をまとめたマニュアル。M言語の関数リファレンスとコードジェネレーター付き。" />
+  <meta property="og:title" content="Power Query マニュアル" />
+  <meta property="og:description" content="データ整形・結合・行複製・テキスト加工の操作手順をまとめたPower Queryマニュアル。M言語関数リファレンス・コードジェネレーター付き。" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Power Query マニュアル" />
+  <meta name="twitter:description" content="ExcelのPower Queryエディターの操作手順・関数リファレンス・コードジェネレーターをまとめたマニュアル。" />
   <title>Power Query マニュアル</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -542,7 +549,7 @@ const masterSteps = [
     details:[
       "Excelの空きシートまたは同じシートの空きスペースにマスタ表を作成",
       "列構成の例：タイトル名 ／ カテゴリ ／ 属性",
-      "データを入力（例：ごちうさ → アニメ → アニメーション）",
+      "データを入力（例：作品A → アニメ → アニメーション）",
       "マスタ範囲を選択してCtrl+Tでテーブル化し、テーブル名を設定（例：属性マスタ）",
     ],
     warns:["タイトル名は元データの表記と完全一致させること（表記ゆれがある場合は正規化マスタを別途作成）"],
@@ -847,12 +854,12 @@ const functionData = [
     docUrl: "https://learn.microsoft.com/ja-jp/powerquery-m/text-functions",
     functions: [
       { name:"Text.Select",    syntax:'Text.Select([列名], {"ぁ".."ん","ァ".."ン","一".."龯","A".."Z","a".."z"})', desc:"指定した文字種のみを抽出する。文字以外（数字・記号）を除去するのに使う。", example:'Text.Select([タイトル], {"ぁ".."ん","一".."龯"}) → 日本語のみ抽出', usage:"テキスト加工 ▶ カスタム列の数式欄" },
-      { name:"Text.Trim",      syntax:'Text.Trim([列名])', desc:"文字列の前後にある空白文字をすべて削除する。", example:'Text.Trim("  ごちうさ  ") → "ごちうさ"', usage:"変換タブ ▶ 書式 ▶ トリミング（またはカスタム列）" },
+      { name:"Text.Trim",      syntax:'Text.Trim([列名])', desc:"文字列の前後にある空白文字をすべて削除する。", example:'Text.Trim("  サンプル  ") → "サンプル"', usage:"変換タブ ▶ 書式 ▶ トリミング（またはカスタム列）" },
       { name:"Text.Replace",   syntax:'Text.Replace([列名], "検索文字", "置換文字")', desc:"指定した文字列を別の文字列に置換する。", example:'Text.Replace([名前], "株式会社", "") → 会社名を削除', usage:"変換タブ ▶ 値の置換（またはカスタム列）" },
       { name:"Text.Contains",  syntax:'Text.Contains([列名], "検索文字")', desc:"テキストに指定した文字列が含まれるか判定しtrue/falseを返す。", example:'Text.Contains([カテゴリ], "アニメ") → true/false', usage:"条件列・フィルターの条件として使用" },
       { name:"Text.StartsWith",syntax:'Text.StartsWith([列名], "文字")', desc:"テキストが指定した文字列で始まるか判定する。", example:'Text.StartsWith([タイトル], "ご") → true/false', usage:"条件列の数式欄" },
       { name:"Text.EndsWith",  syntax:'Text.EndsWith([列名], "文字")', desc:"テキストが指定した文字列で終わるか判定する。", example:'Text.EndsWith([ファイル名], ".csv") → true/false', usage:"条件列の数式欄" },
-      { name:"Text.Length",    syntax:'Text.Length([列名])', desc:"文字列の文字数を返す。", example:'Text.Length("ごちうさ") → 4', usage:"列の追加 ▶ カスタム列" },
+      { name:"Text.Length",    syntax:'Text.Length([列名])', desc:"文字列の文字数を返す。", example:'Text.Length("サンプル") → 4', usage:"列の追加 ▶ カスタム列" },
       { name:"Text.Upper",     syntax:'Text.Upper([列名])', desc:"英字をすべて大文字に変換する。", example:'Text.Upper("anime") → "ANIME"', usage:"変換タブ ▶ 書式 ▶ 大文字" },
       { name:"Text.Lower",     syntax:'Text.Lower([列名])', desc:"英字をすべて小文字に変換する。", example:'Text.Lower("ANIME") → "anime"', usage:"変換タブ ▶ 書式 ▶ 小文字" },
       { name:"Text.Combine",   syntax:'Text.Combine({[列1],[列2]}, "区切り文字")', desc:"複数のテキスト値を区切り文字で結合する。", example:'Text.Combine({[姓],[名]}, " ") → "山田 太郎"', usage:"列の追加 ▶ カスタム列" },
@@ -1058,7 +1065,32 @@ function FunctionReference() {
 // コードジェネレーター
 // ==============================
 function CodeGenerator() {
-  const { useState: useS, useCallback } = React;
+  const { useState: useS } = React;
+
+  // --- 型定義 ---
+  const typeOptions = [
+    { value:"text",     label:"テキスト", short:"abc", color:"#64748b", bg:"#f1f5f9", border:"#e2e8f0" },
+    { value:"number",   label:"数値",     short:"123", color:"#0369a1", bg:"#eff6ff", border:"#bfdbfe" },
+    { value:"date",     label:"日付",     short:"日付", color:"#b45309", bg:"#fff7ed", border:"#fed7aa" },
+    { value:"datetime", label:"日時",     short:"日時", color:"#7c3aed", bg:"#f5f3ff", border:"#c4b5fd" },
+    { value:"logical",  label:"論理値",   short:"○×", color:"#15803d", bg:"#f0fdf4", border:"#86efac" },
+  ];
+
+  // === 列名エスケープ関数（特殊文字・記号・スペース含む列名を自動で #"..." 形式に変換）===
+  const col = (name) => {
+    if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(name)) return `[${name}]`;
+    return `[#"${name}"]`;
+  };
+
+  // === 型→変換式 ===
+  const colWithType = ({name, type}) => {
+    const c = col(name);
+    if (type === "number")   return `Text.From(${c})`;
+    if (type === "date")     return `Date.ToText(${c}, "yyyy/MM/dd")`;
+    if (type === "datetime") return `DateTime.ToText(${c}, "yyyy/MM/dd HH:mm")`;
+    if (type === "logical")  return `if ${c} then "○" else "×"`;
+    return c;
+  };
 
   // --- 共通ユーティリティ ---
   const [copied, setCopied] = useS(null);
@@ -1093,21 +1125,51 @@ function CodeGenerator() {
     </div>
   );
 
-  // === 列名エスケープ関数（特殊文字・記号・スペース含む列名を自動で #"..." 形式に変換）===
-  const col = (name) => {
-    // 英数字とアンダースコアのみで構成されている場合はそのまま [列名]
-    if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(name)) return `[${name}]`;
-    // それ以外（日本語・記号・スペース・【】№など）は [#"列名"] 形式
-    return `[#"${name}"]`;
-  };
+  // --- 共通スタイル ---
+  const labelStyle = { fontSize:11, fontWeight:"bold", color:"#78350f", marginBottom:4, display:"block" };
+  const inputStyle = { border:"1px solid #fed7aa", borderRadius:6, padding:"6px 10px", fontSize:13, fontFamily:"inherit", outline:"none", background:"#fff", width:"100%" };
+  const tipStyle = { background:"#fff7ed", border:"1px solid #fed7aa", borderRadius:8, padding:"8px 12px", fontSize:12, color:"#92400e", marginBottom:12 };
+  const typeSelectStyle = { border:"1px solid #fed7aa", borderRadius:6, padding:"6px 8px", fontSize:12, fontFamily:"inherit", background:"#fff", color:"#92400e", cursor:"pointer", outline:"none" };
+
+  // === 型付き列入力コンポーネント ===
+  const TypedColInput = ({ cols, input, setInput, inputType, setInputType, onAdd, onRemove, onTypeChange }) => (
+    <div>
+      <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:8 }}>
+        {cols.map((item, i) => {
+          const t = typeOptions.find(o => o.value === item.type) || typeOptions[0];
+          return (
+            <span key={i} style={{ display:"inline-flex", alignItems:"center", gap:4, background:"#fff7ed", border:"1px solid #fed7aa", borderRadius:999, padding:"3px 6px 3px 10px", fontSize:12, color:"#92400e" }}>
+              {col(item.name)}
+              <select value={item.type} onChange={e => onTypeChange(i, e.target.value)}
+                style={{ border:"none", background:t.bg, color:t.color, fontSize:10, fontWeight:"bold", borderRadius:6, padding:"1px 4px", cursor:"pointer", fontFamily:"inherit", outline:"none" }}>
+                {typeOptions.map(o => <option key={o.value} value={o.value}>{o.short} {o.label}</option>)}
+              </select>
+              <button onClick={() => onRemove(i)} style={{ background:"none", border:"none", cursor:"pointer", color:"#ef4444", fontSize:14, lineHeight:1, padding:0, fontWeight:"bold" }}>×</button>
+            </span>
+          );
+        })}
+      </div>
+      <div style={{ display:"flex", gap:6 }}>
+        <input value={input} onChange={e=>setInput(e.target.value)}
+          onKeyDown={e=>{ if(e.key==="Enter"){ e.preventDefault(); onAdd(); }}}
+          placeholder="列名を入力してEnter" style={{...inputStyle, flex:1}} />
+        <select value={inputType} onChange={e=>setInputType(e.target.value)} style={typeSelectStyle}>
+          {typeOptions.map(o => <option key={o.value} value={o.value}>{o.short} {o.label}</option>)}
+        </select>
+        <button onClick={onAdd} style={{ background:"#b45309", color:"#fff", border:"none", borderRadius:6, padding:"6px 14px", fontSize:12, cursor:"pointer", fontFamily:"inherit", whiteSpace:"nowrap" }}>追加</button>
+      </div>
+    </div>
+  );
 
   // === パターン①：基本連結 ===
-  const [p1Cols, setP1Cols] = useS(["SheetName","No"]);
+  const [p1Cols, setP1Cols] = useS([{name:"SheetName",type:"text"},{name:"No",type:"number"}]);
   const [p1Delim, setP1Delim] = useS("-");
   const [p1Input, setP1Input] = useS("");
-  const addP1Col = () => { if(p1Input.trim()) { setP1Cols([...p1Cols, p1Input.trim()]); setP1Input(""); }};
+  const [p1InputType, setP1InputType] = useS("text");
+  const addP1Col = () => { if(p1Input.trim()) { setP1Cols([...p1Cols, {name:p1Input.trim(), type:p1InputType}]); setP1Input(""); }};
   const removeP1Col = (i) => setP1Cols(p1Cols.filter((_,idx)=>idx!==i));
-  const genP1 = () => p1Cols.map(c => col(c)).join(` & "${p1Delim}" & `);
+  const changeP1Type = (i, t) => setP1Cols(p1Cols.map((c,idx)=>idx===i?{...c,type:t}:c));
+  const genP1 = () => p1Cols.map(c => colWithType(c)).join(` & "${p1Delim}" & `);
 
   // === パターン②：ゼロ埋めID ===
   const [p2Prefix, setP2Prefix] = useS("SheetName");
@@ -1118,48 +1180,59 @@ function CodeGenerator() {
     `${col(p2Prefix)} & "${p2Delim}" & Text.PadStart(Text.From(${col(p2No)}), ${p2Pad}, "0")`;
 
   // === パターン③：null安全連結 ===
-  const [p3Cols, setP3Cols] = useS(["Major","Minor"]);
+  const [p3Cols, setP3Cols] = useS([{name:"大分類",type:"text"},{name:"小分類",type:"text"}]);
   const [p3Delim, setP3Delim] = useS(" / ");
   const [p3Input, setP3Input] = useS("");
-  const addP3Col = () => { if(p3Input.trim()) { setP3Cols([...p3Cols, p3Input.trim()]); setP3Input(""); }};
+  const [p3InputType, setP3InputType] = useS("text");
+  const addP3Col = () => { if(p3Input.trim()) { setP3Cols([...p3Cols, {name:p3Input.trim(), type:p3InputType}]); setP3Input(""); }};
   const removeP3Col = (i) => setP3Cols(p3Cols.filter((_,idx)=>idx!==i));
+  const changeP3Type = (i, t) => setP3Cols(p3Cols.map((c,idx)=>idx===i?{...c,type:t}:c));
   const genP3 = () => {
-    const items = p3Cols.map(c=>`        ${col(c)}`).join(",\n");
+    const items = p3Cols.map(c=>`        ${colWithType(c)}`).join(",\n");
     return `Text.Combine(\n    List.RemoveNulls({\n${items}\n    }),\n    "${p3Delim}"\n)`;
   };
 
   // === パターン④：条件付き連結 ===
-  const [p4Col1, setP4Col1] = useS("Major");
-  const [p4Col2, setP4Col2] = useS("Minor");
+  const [p4Col1, setP4Col1] = useS("大分類");
+  const [p4Col1Type, setP4Col1Type] = useS("text");
+  const [p4Col2, setP4Col2] = useS("小分類");
+  const [p4Col2Type, setP4Col2Type] = useS("text");
   const [p4Open, setP4Open] = useS("（");
   const [p4Close, setP4Close] = useS("）");
-  const genP4 = () =>
-    `if ${col(p4Col2)} <> null then\n    ${col(p4Col1)} & "${p4Open}" & ${col(p4Col2)} & "${p4Close}"\nelse\n    ${col(p4Col1)}`;
+  const genP4 = () => {
+    const c1 = colWithType({name:p4Col1, type:p4Col1Type});
+    const c2 = colWithType({name:p4Col2, type:p4Col2Type});
+    return `if ${col(p4Col2)} <> null then\n    ${c1} & "${p4Open}" & ${c2} & "${p4Close}"\nelse\n    ${c1}`;
+  };
 
   // === パターン⑤：Copilot/AI入力用 ===
-  const [p5Cols, setP5Cols] = useS(["Major","Minor","No","QuestionText"]);
+  const [p5Cols, setP5Cols] = useS([{name:"大分類",type:"text"},{name:"小分類",type:"text"},{name:"No",type:"number"},{name:"質問文",type:"text"}]);
   const [p5Delim, setP5Delim] = useS("｜");
   const [p5Input, setP5Input] = useS("");
+  const [p5InputType, setP5InputType] = useS("text");
   const [p5UseNo, setP5UseNo] = useS(true);
   const [p5NoCol, setP5NoCol] = useS("No");
   const [p5NoPrefix, setP5NoPrefix] = useS("設問");
-  const addP5Col = () => { if(p5Input.trim()) { setP5Cols([...p5Cols, p5Input.trim()]); setP5Input(""); }};
+  const addP5Col = () => { if(p5Input.trim()) { setP5Cols([...p5Cols, {name:p5Input.trim(), type:p5InputType}]); setP5Input(""); }};
   const removeP5Col = (i) => setP5Cols(p5Cols.filter((_,idx)=>idx!==i));
+  const changeP5Type = (i, t) => setP5Cols(p5Cols.map((c,idx)=>idx===i?{...c,type:t}:c));
   const genP5 = () => {
-    const items = p5Cols.map((c) => {
-      if(p5UseNo && c===p5NoCol) return `        "${p5NoPrefix}" & Text.From(${col(c)})`;
-      return `        ${col(c)}`;
+    const items = p5Cols.map((item) => {
+      if(p5UseNo && item.name===p5NoCol) return `        "${p5NoPrefix}" & Text.From(${col(item.name)})`;
+      return `        ${colWithType(item)}`;
     }).join(",\n");
     return `Text.Combine(\n    List.RemoveNulls({\n${items}\n    }),\n    "${p5Delim}"\n)`;
   };
 
   // === パターン⑥：改行区切り ===
-  const [p6Cols, setP6Cols] = useS(["Major","Minor","QuestionText"]);
+  const [p6Cols, setP6Cols] = useS([{name:"大分類",type:"text"},{name:"小分類",type:"text"},{name:"質問文",type:"text"}]);
   const [p6Input, setP6Input] = useS("");
-  const addP6Col = () => { if(p6Input.trim()) { setP6Cols([...p6Cols, p6Input.trim()]); setP6Input(""); }};
+  const [p6InputType, setP6InputType] = useS("text");
+  const addP6Col = () => { if(p6Input.trim()) { setP6Cols([...p6Cols, {name:p6Input.trim(), type:p6InputType}]); setP6Input(""); }};
   const removeP6Col = (i) => setP6Cols(p6Cols.filter((_,idx)=>idx!==i));
+  const changeP6Type = (i, t) => setP6Cols(p6Cols.map((c,idx)=>idx===i?{...c,type:t}:c));
   const genP6 = () => {
-    const items = p6Cols.map(c=>`        ${col(c)}`).join(",\n");
+    const items = p6Cols.map(c=>`        ${colWithType(c)}`).join(",\n");
     return `Text.Combine(\n    List.RemoveNulls({\n${items}\n    }),\n    "#(lf)"\n)`;
   };
 
@@ -1167,50 +1240,22 @@ function CodeGenerator() {
   const [p7Name, setP7Name] = useS("fnCombineSafe");
   const genP7def = () =>
     `(cols as list, delimiter as text) as text =>\n    Text.Combine(\n        List.RemoveNulls(cols),\n        delimiter\n    )`;
-  const [p7Cols, setP7Cols] = useS(["Major","Minor","No"]);
+  const [p7Cols, setP7Cols] = useS([{name:"大分類",type:"text"},{name:"小分類",type:"text"},{name:"No",type:"number"}]);
   const [p7Delim, setP7Delim] = useS(" / ");
   const [p7Input, setP7Input] = useS("");
+  const [p7InputType, setP7InputType] = useS("text");
   const [p7NoCol, setP7NoCol] = useS("No");
   const [p7UseNo, setP7UseNo] = useS(true);
-  const addP7Col = () => { if(p7Input.trim()) { setP7Cols([...p7Cols, p7Input.trim()]); setP7Input(""); }};
+  const addP7Col = () => { if(p7Input.trim()) { setP7Cols([...p7Cols, {name:p7Input.trim(), type:p7InputType}]); setP7Input(""); }};
   const removeP7Col = (i) => setP7Cols(p7Cols.filter((_,idx)=>idx!==i));
+  const changeP7Type = (i, t) => setP7Cols(p7Cols.map((c,idx)=>idx===i?{...c,type:t}:c));
   const genP7use = () => {
-    const items = p7Cols.map(c => {
-      if(p7UseNo && c===p7NoCol) return `Text.From(${col(c)})`;
-      return col(c);
+    const items = p7Cols.map(item => {
+      if(p7UseNo && item.name===p7NoCol) return `Text.From(${col(item.name)})`;
+      return colWithType(item);
     }).join(", ");
     return `${p7Name}({${items}}, "${p7Delim}")`;
   };
-
-  // --- 共通スタイル ---
-  const labelStyle = { fontSize:11, fontWeight:"bold", color:"#78350f", marginBottom:4, display:"block" };
-  const inputStyle = { border:"1px solid #fed7aa", borderRadius:6, padding:"6px 10px", fontSize:13, fontFamily:"inherit", outline:"none", background:"#fff", width:"100%" };
-  const tagStyle = (c, onRemove) => (
-    <span key={c} style={{ display:"inline-flex", alignItems:"center", gap:4, background:"#fff7ed", border:"1px solid #fed7aa", borderRadius:999, padding:"3px 10px", fontSize:12, color:"#92400e" }}>
-      {col(c)}
-      <button onClick={onRemove} style={{ background:"none", border:"none", cursor:"pointer", color:"#ef4444", fontSize:14, lineHeight:1, padding:0, fontWeight:"bold" }}>×</button>
-    </span>
-  );
-  const sectionStyle = (color="#b45309", bg="#fffbeb", border="#fed7aa") => ({
-    background:"#fff", border:"2px solid "+border, borderRadius:12, padding:20, marginBottom:12
-  });
-  const h3Style = { fontSize:14, fontWeight:"bold", color:"#1e293b", marginBottom:4 };
-  const descStyle = { fontSize:12, color:"#64748b", marginBottom:14, lineHeight:1.6 };
-  const tipStyle = { background:"#fff7ed", border:"1px solid #fed7aa", borderRadius:8, padding:"8px 12px", fontSize:12, color:"#92400e", marginBottom:12 };
-
-  const ColInput = ({ cols, input, setInput, onAdd, onRemove }) => (
-    <div>
-      <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:8 }}>
-        {cols.map((c,i) => tagStyle(c, ()=>onRemove(i)))}
-      </div>
-      <div style={{ display:"flex", gap:6 }}>
-        <input value={input} onChange={e=>setInput(e.target.value)}
-          onKeyDown={e=>{ if(e.key==="Enter"){ e.preventDefault(); onAdd(); }}}
-          placeholder="列名を入力してEnter" style={{...inputStyle, flex:1}} />
-        <button onClick={onAdd} style={{ background:"#b45309", color:"#fff", border:"none", borderRadius:6, padding:"6px 14px", fontSize:12, cursor:"pointer", fontFamily:"inherit", whiteSpace:"nowrap" }}>追加</button>
-      </div>
-    </div>
-  );
 
   const patterns = [
     {
@@ -1222,7 +1267,7 @@ function CodeGenerator() {
         <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
           <div>
             <label style={labelStyle}>結合する列（順番に追加）</label>
-            <ColInput cols={p1Cols} input={p1Input} setInput={setP1Input} onAdd={addP1Col} onRemove={removeP1Col} />
+            <TypedColInput cols={p1Cols} input={p1Input} setInput={setP1Input} inputType={p1InputType} setInputType={setP1InputType} onAdd={addP1Col} onRemove={removeP1Col} onTypeChange={changeP1Type} />
           </div>
           <div>
             <label style={labelStyle}>区切り文字</label>
@@ -1259,7 +1304,7 @@ function CodeGenerator() {
             </div>
           </div>
           <div style={{ background:"#f8fafc", borderRadius:8, padding:"8px 12px", fontSize:12, color:"#64748b" }}>
-            プレビュー：<strong style={{color:"#1e293b"}}>[{p2Prefix}] → 例「経営管理」、[{p2No}] → 例「1」のとき… 「経営管理{p2Delim}{"0".repeat(Math.max(0,parseInt(p2Pad||1)-1))}1」</strong>
+            プレビュー：<strong style={{color:"#1e293b"}}>[{p2Prefix}] → 例「部門A」、[{p2No}] → 例「1」のとき… 「部門A{p2Delim}{"0".repeat(Math.max(0,parseInt(p2Pad||1)-1))}1」</strong>
           </div>
         </div>
       ),
@@ -1274,7 +1319,7 @@ function CodeGenerator() {
         <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
           <div>
             <label style={labelStyle}>結合する列（順番に追加）</label>
-            <ColInput cols={p3Cols} input={p3Input} setInput={setP3Input} onAdd={addP3Col} onRemove={removeP3Col} />
+            <TypedColInput cols={p3Cols} input={p3Input} setInput={setP3Input} inputType={p3InputType} setInputType={setP3InputType} onAdd={addP3Col} onRemove={removeP3Col} onTypeChange={changeP3Type} />
           </div>
           <div>
             <label style={labelStyle}>区切り文字</label>
@@ -1288,18 +1333,24 @@ function CodeGenerator() {
     {
       key:"p4", num:"④", title:"条件付き結合（列がある時だけ括弧つき表示）",
       badge:"表示制御", badgeBg:"#f5f3ff", badgeColor:"#5b21b6",
-      desc:"「Minorがある場合は（括弧）つきで表示、ない場合はMajorだけ」のような条件分岐表示に使います。",
+      desc:"「小分類がある場合は（括弧）つきで表示、ない場合は大分類だけ」のような条件分岐表示に使います。",
       tip:"💡 if〜then〜elseはM言語の基本的な分岐構文です。",
       form: (
         <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
             <div>
               <label style={labelStyle}>メイン列（常に表示）</label>
-              <input value={p4Col1} onChange={e=>setP4Col1(e.target.value)} style={inputStyle} placeholder="例: Major" />
+              <input value={p4Col1} onChange={e=>setP4Col1(e.target.value)} style={inputStyle} placeholder="例: 大分類" />
+              <select value={p4Col1Type} onChange={e=>setP4Col1Type(e.target.value)} style={{...typeSelectStyle, marginTop:4, width:"100%"}}>
+                {typeOptions.map(o => <option key={o.value} value={o.value}>{o.short} {o.label}</option>)}
+              </select>
             </div>
             <div>
               <label style={labelStyle}>サブ列（nullの場合は非表示）</label>
-              <input value={p4Col2} onChange={e=>setP4Col2(e.target.value)} style={inputStyle} placeholder="例: Minor" />
+              <input value={p4Col2} onChange={e=>setP4Col2(e.target.value)} style={inputStyle} placeholder="例: 小分類" />
+              <select value={p4Col2Type} onChange={e=>setP4Col2Type(e.target.value)} style={{...typeSelectStyle, marginTop:4, width:"100%"}}>
+                {typeOptions.map(o => <option key={o.value} value={o.value}>{o.short} {o.label}</option>)}
+              </select>
             </div>
             <div>
               <label style={labelStyle}>開き括弧</label>
@@ -1326,7 +1377,7 @@ function CodeGenerator() {
         <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
           <div>
             <label style={labelStyle}>結合する列（順番に追加）</label>
-            <ColInput cols={p5Cols} input={p5Input} setInput={setP5Input} onAdd={addP5Col} onRemove={removeP5Col} />
+            <TypedColInput cols={p5Cols} input={p5Input} setInput={setP5Input} inputType={p5InputType} setInputType={setP5InputType} onAdd={addP5Col} onRemove={removeP5Col} onTypeChange={changeP5Type} />
           </div>
           <div style={{ display:"flex", alignItems:"center", gap:10, background:"#fdf2f8", border:"1px solid #fbcfe8", borderRadius:8, padding:"10px 12px" }}>
             <input type="checkbox" id="p5useNo" checked={p5UseNo} onChange={e=>setP5UseNo(e.target.checked)} style={{ width:16, height:16, cursor:"pointer" }} />
@@ -1361,7 +1412,7 @@ function CodeGenerator() {
       form: (
         <div>
           <label style={labelStyle}>結合する列（順番に追加）</label>
-          <ColInput cols={p6Cols} input={p6Input} setInput={setP6Input} onAdd={addP6Col} onRemove={removeP6Col} />
+          <TypedColInput cols={p6Cols} input={p6Input} setInput={setP6Input} inputType={p6InputType} setInputType={setP6InputType} onAdd={addP6Col} onRemove={removeP6Col} onTypeChange={changeP6Type} />
         </div>
       ),
       genCode: genP6,
@@ -1386,7 +1437,7 @@ function CodeGenerator() {
             <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
               <div>
                 <label style={labelStyle}>結合する列</label>
-                <ColInput cols={p7Cols} input={p7Input} setInput={setP7Input} onAdd={addP7Col} onRemove={removeP7Col} />
+                <TypedColInput cols={p7Cols} input={p7Input} setInput={setP7Input} inputType={p7InputType} setInputType={setP7InputType} onAdd={addP7Col} onRemove={removeP7Col} onTypeChange={changeP7Type} />
               </div>
               <div style={{ display:"flex", alignItems:"center", gap:10, background:"#fff7ed", border:"1px solid #fed7aa", borderRadius:8, padding:"8px 12px" }}>
                 <input type="checkbox" id="p7useNo" checked={p7UseNo} onChange={e=>setP7UseNo(e.target.checked)} style={{ width:16, height:16, cursor:"pointer" }} />
@@ -1419,7 +1470,25 @@ function CodeGenerator() {
     <div>
       {/* 説明 */}
       <div style={{ background:"#fff", border:"1px solid #e2e8f0", borderRadius:10, padding:"12px 16px", marginBottom:14, fontSize:12, color:"#64748b", lineHeight:1.7 }}>
-        🛠️ パターンをクリックして展開 → 列名・区切り文字を入力 → <strong style={{color:"#1e293b"}}>コピーボタンでそのままPower Queryに貼り付けられるMコードが完成</strong>します。
+        🛠️ パターンをクリックして展開 → 列名・<strong style={{color:"#1e293b"}}>型</strong>・区切り文字を入力 → <strong style={{color:"#1e293b"}}>コピーボタンでそのままPower Queryに貼り付けられるMコードが完成</strong>します。
+      </div>
+
+      {/* 型ガイド */}
+      <div style={{ background:"#fff", border:"1px solid #e2e8f0", borderRadius:10, padding:"12px 16px", marginBottom:14 }}>
+        <div style={{ fontSize:11, fontWeight:"bold", color:"#64748b", marginBottom:8 }}>📌 列の型を選ぶと自動で変換式を付加します（数値・日付はそのまま &amp; 結合できないため）</div>
+        <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+          {typeOptions.map(o => (
+            <span key={o.value} style={{ background:o.bg, color:o.color, border:"1px solid "+o.border, borderRadius:6, padding:"4px 10px", fontSize:11, fontWeight:"bold" }}>
+              {o.short} {o.label}{"  →  "}{
+                o.value==="text"     ? "[列名]（そのまま）" :
+                o.value==="number"   ? "Text.From([列名])" :
+                o.value==="date"     ? 'Date.ToText([列名], "yyyy/MM/dd")' :
+                o.value==="datetime" ? 'DateTime.ToText([列名], "yyyy/MM/dd HH:mm")' :
+                'if [列名] then "○" else "×"'
+              }
+            </span>
+          ))}
+        </div>
       </div>
 
       {/* アコーディオン */}
